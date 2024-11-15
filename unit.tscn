@@ -1,9 +1,10 @@
-[gd_scene load_steps=10 format=3 uid="uid://6m37eo4vu10a"]
+[gd_scene load_steps=12 format=3 uid="uid://6m37eo4vu10a"]
 
 [ext_resource type="Script" path="res://unit.gd" id="1_gqqc4"]
 [ext_resource type="Texture2D" uid="uid://bknh2u8xwctne" path="res://assets/hex_white.png" id="1_ryqge"]
 [ext_resource type="Texture2D" uid="uid://bn1y5f27it6u8" path="res://assets/soldier.png" id="2_n0b2i"]
 [ext_resource type="Texture2D" uid="uid://behd4c8r8c0gh" path="res://assets/usaflagtest.png" id="4_qsgrv"]
+[ext_resource type="Shader" path="res://circle.gdshader" id="5_hcs4m"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jofek"]
 
@@ -71,6 +72,9 @@ _data = {
 "die": SubResource("Animation_6jqqb")
 }
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yfuvb"]
+shader = ExtResource("5_hcs4m")
+
 [node name="Unit" type="Node2D"]
 script = ExtResource("1_gqqc4")
 
@@ -103,6 +107,15 @@ libraries = {
 [node name="AttackTimer" type="Timer" parent="."]
 wait_time = 0.1
 one_shot = true
+
+[node name="MovementIndicator" type="ColorRect" parent="."]
+z_index = 10
+material = SubResource("ShaderMaterial_yfuvb")
+offset_left = -30.0
+offset_top = -48.0
+offset_right = -10.0
+offset_bottom = -28.0
+color = Color(0.0588235, 0.854902, 0.0941176, 1)
 
 [connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_animation_player_animation_finished"]
 [connection signal="timeout" from="AttackTimer" to="." method="_on_attack_timer_timeout"]

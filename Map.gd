@@ -16,7 +16,8 @@ func _ready():
 	initFactionControl()
 	initPathfinding()
 	initUnits()
-	initFogOfWar()
+	nextTurnFogOfWar(Global.currentPlayer)
+	nextTurnUnitSetup(Global.currentPlayer)
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -69,7 +70,7 @@ func highlightMoveRange():
 func selectUnit(pos_clicked):
 	if (Global.mapData.has(pos_clicked) and Global.mapData[pos_clicked].unit != null):
 		var unit = Global.mapData[pos_clicked].unit
-		if (unit.faction == Global.currentPlayer):
+		if (unit.faction == Global.currentPlayer and unit.movePoints > 0):
 			selectedUnit = unit
 			selectedUnitRange = getMoveRange(pos_clicked, selectedUnit.movePoints)
 		
@@ -95,6 +96,7 @@ func moveUnit(unit:Unit, start:Vector2i):
 			combatResult = CombatHelper.attack(Global.mapData[unit.position], Global.mapData[cell])
 			dead = combatResult.attackerDead
 			canMove = combatResult.defenderDead
+			remainingMovement = 0
 			
 		if not dead and canMove:
 			mapUnitPath.push_back(Global.mapData[cell].worldPos)
@@ -102,6 +104,7 @@ func moveUnit(unit:Unit, start:Vector2i):
 			Global.mapData[unit.position].unit = null
 			Global.mapData[cell].unit = unit
 			unit.position = cell
+			Global.mapUnits[unit.mapUnitId].mapPosition = unit.position
 			if (Global.mapData[cell].faction != unit.faction):
 				takeEnemyTerritory(cell, unit)
 			if (remainingMovement <= 0 or unit.movePath.is_empty()):
@@ -111,6 +114,9 @@ func moveUnit(unit:Unit, start:Vector2i):
 	Global.hgh.freeCell(start)
 	Global.processDeaths(combatResult)
 	if not dead:
+		if (remainingMovement <= 0):
+			Global.mapUnits[unit.mapUnitId].setMovementIndicatorEmpty(true)
+		unit.movePoints = remainingMovement if remainingMovement >= 0 else 0
 		Global.factions[unit.faction].unitPositions.erase(start)
 		Global.factions[unit.faction].unitPositions[unit.position] = true
 		Global.hgh.occupyCell(unit.position)
@@ -166,6 +172,7 @@ func initUnits():
 		unit.position = pos
 		unit.hp = 100.0
 		unit.movePoints = 3
+		unit.defaultMovePoints = unit.movePoints
 		unit.faction = getFactionAtPos(pos)
 		Global.factions[unit.faction].unitPositions[pos] = true
 		unit.name = "Infantry"
@@ -229,10 +236,10 @@ func initPathfinding():
 	Global.hgh.setMapData(Global.mapData)
 	Global.hgh.initMap()
 	
-func initFogOfWar():
+func nextTurnFogOfWar(player:int):
 	for tile in Global.mapData:
 		var cell = Global.mapData[tile]
-		if cell.faction != Global.currentPlayer:
+		if cell.faction != player:
 			$FOW.set_cell(cell.pos, 0, Vector2i(0,0))
 			if cell.unit != null:
 				Global.mapUnits[cell.unit.mapUnitId].visible = false
@@ -241,14 +248,26 @@ func initFogOfWar():
 			if cell.unit != null:
 				Global.mapUnits[cell.unit.mapUnitId].visible = true
 				
-	for unitPos in Global.factions[Global.currentPlayer].unitPositions:
+	for unitPos in Global.factions[player].unitPositions:
 		var unit = Global.mapData[unitPos].unit
 		for innerCell in Global.hgh.getNeighbors(unit.position):
 			for outerCell in Global.hgh.getNeighbors(innerCell):
 				$FOW.set_cell(outerCell, -1)
 				if Global.mapData[outerCell].unit != null:
 					Global.mapUnits[Global.mapData[outerCell].unit.mapUnitId].visible = true
-	
+
+func nextTurnUnitSetup(player:int):
+	for id in Global.mapUnits:
+		var cell = Global.mapUnits[id].mapPosition
+		var unit = Global.mapData[cell].unit
+		if unit.faction == player:
+			unit.movePoints = unit.defaultMovePoints
+			Global.mapUnits[id].setMovementIndicatorVisible(true)
+			Global.mapUnits[id].setMovementIndicatorEmpty(false)
+		else:
+			Global.mapUnits[id].setMovementIndicatorVisible(false)
+		
+
 func nextTurn():
 	for cell in Global.factions[Global.currentPlayer].unitPositions:
 		var unit = Global.mapData[cell].unit
@@ -258,7 +277,8 @@ func nextTurn():
 	Global.turn += 1
 	Global.currentPlayer = (Global.currentPlayer) % (Global.factions.size() - 1) + 1
 	
-	initFogOfWar()
+	nextTurnFogOfWar(Global.currentPlayer)
+	nextTurnUnitSetup(Global.currentPlayer)
 	
 	next_turn.emit()
 

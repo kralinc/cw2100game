@@ -295,6 +295,14 @@ step = 0.1
 value = 100.0
 show_percentage = false
 
+[node name="MovementLabel" type="Label" parent="HUD/UnitInfo"]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 42.0
+offset_right = 108.0
+offset_bottom = 65.0
+text = "Movement: 3"
+
 [node name="Button2" type="Button" parent="HUD"]
 offset_right = 8.0
 offset_bottom = 8.0
@@ -306,7 +314,6 @@ offset_top = 31.0
 offset_right = 215.0
 offset_bottom = 128.0
 color = Color(0.241156, 0.241156, 0.241156, 1)
-metadata/_edit_lock_ = true
 
 [node name="Flag" type="TextureRect" parent="HUD/PlayerInfo"]
 layout_mode = 0

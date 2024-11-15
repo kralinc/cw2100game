@@ -41,6 +41,15 @@ func doAttackAnimation():
 
 func destroySelf():
 	$AnimationPlayer.play("die")
+	
+func setMovementIndicatorVisible(val:bool):
+	$MovementIndicator.visible = val
+	
+func setMovementIndicatorEmpty(val:bool):
+	if val:
+		$MovementIndicator.color = Color(1,0.3,0.3)
+	else:
+		$MovementIndicator.color = Color(0.3,1.0,0.3)
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "die":

@@ -35,6 +35,7 @@ func setUnitInfo(unit:Unit) -> void:
 	$UnitInfo/HealthBar.value = unit.hp
 	var healthPercentage:float = unit.hp / 100.0
 	$UnitInfo/HealthBar.modulate = Color(1 - healthPercentage, healthPercentage, 0)
+	$UnitInfo/MovementLabel.text = "Movement: %s" % unit.movePoints
 
 func setPlayerInfo() -> void:
 	$PlayerInfo/NameLabel.text = Global.factions[Global.currentPlayer].fullName

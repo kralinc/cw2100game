@@ -75,10 +75,12 @@ func processDeaths(combatResult:CombatResult) -> void:
 	if (combatResult.attackerDead):
 		factions[combatResult.attackerCell.unit.faction].unitPositions.erase(combatResult.attackerCell.pos)
 		mapUnits[combatResult.attackerUnit.mapUnitId].destroySelf()
+		mapUnits.erase(combatResult.attackerUnit.mapUnitId)
 		combatResult.attackerCell.unit = null
 		
 	if (combatResult.defenderDead):
 		factions[combatResult.defenderUnit.faction].unitPositions.erase(combatResult.defenderCell.pos)
 		mapUnits[combatResult.defenderUnit.mapUnitId].destroySelf()
+		mapUnits.erase(combatResult.defenderUnit.mapUnitId)
 		if (combatResult.attackerDead):
 			combatResult.defenderCell.unit = null
