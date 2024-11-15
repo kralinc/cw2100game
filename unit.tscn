@@ -1,0 +1,108 @@
+[gd_scene load_steps=10 format=3 uid="uid://6m37eo4vu10a"]
+
+[ext_resource type="Script" path="res://unit.gd" id="1_gqqc4"]
+[ext_resource type="Texture2D" uid="uid://bknh2u8xwctne" path="res://assets/hex_white.png" id="1_ryqge"]
+[ext_resource type="Texture2D" uid="uid://bn1y5f27it6u8" path="res://assets/soldier.png" id="2_n0b2i"]
+[ext_resource type="Texture2D" uid="uid://behd4c8r8c0gh" path="res://assets/usaflagtest.png" id="4_qsgrv"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_jofek"]
+
+[sub_resource type="Animation" id="Animation_r8gjv"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("UnitSprite:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_j0f4i"]
+resource_name = "attack"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("UnitSprite:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.3),
+"transitions": PackedFloat32Array(1, 0.34151, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(0, -25), Vector2(0, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_6jqqb"]
+resource_name = "die"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(-0.0333333, 0.366667),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(0.882353, 0.0705882, 0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_lyu3l"]
+_data = {
+"RESET": SubResource("Animation_r8gjv"),
+"attack": SubResource("Animation_j0f4i"),
+"die": SubResource("Animation_6jqqb")
+}
+
+[node name="Unit" type="Node2D"]
+script = ExtResource("1_gqqc4")
+
+[node name="Hex" type="Sprite2D" parent="."]
+texture = ExtResource("1_ryqge")
+
+[node name="UnitSprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_n0b2i")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+scale = Vector2(3, 3)
+shape = SubResource("CircleShape2D_jofek")
+
+[node name="Flag" type="TextureRect" parent="."]
+z_index = 9
+offset_left = 20.0
+offset_top = -30.0
+offset_right = 41.0
+offset_bottom = -16.0
+texture = ExtResource("4_qsgrv")
+expand_mode = 3
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_lyu3l")
+}
+
+[node name="AttackTimer" type="Timer" parent="."]
+wait_time = 0.1
+one_shot = true
+
+[connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_animation_player_animation_finished"]
+[connection signal="timeout" from="AttackTimer" to="." method="_on_attack_timer_timeout"]
