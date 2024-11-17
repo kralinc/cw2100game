@@ -8,6 +8,7 @@ var mapData:Dictionary
 var mapUnits:Dictionary
 var factions:Dictionary
 var terrain:Dictionary
+var unitTypes:Dictionary
 var currentPlayer:int = 1
 
 var turn = 1
@@ -16,6 +17,7 @@ var turn = 1
 func _ready() -> void:
 	setupFactions()
 	setupTerrain()
+	setupUnitTypes()
 
 func setupFactions():
 	var none = Faction.new()
@@ -33,13 +35,13 @@ func setupFactions():
 	var csa = Faction.new()
 	csa.fullName = "Kingdom of America"
 	csa.color = Color(0.4, 0.4, 0.4)
-	csa.flag = load("res://assets/otherflagtest.png")
+	csa.flag = load("res://assets/koaflag.png")
 	factions[2] = csa
 	
 	var wf = Faction.new()
 	wf.fullName = "Western Forces"
 	wf.color = Color(0,1,0.5)
-	wf.flag = load("res://assets/otherflagtest.png")
+	wf.flag = load("res://assets/wfflag.png")
 	factions[3] = wf
 	
 	var can = Faction.new()
@@ -52,10 +54,15 @@ func setupTerrain():
 	terrain["plains"] = TerrainData.new("plains", "Plains", 1)
 	terrain["hills"] = TerrainData.new("hills", "Hills", 2)
 	terrain["desert"] = TerrainData.new("desert", "Desert", 1)
-	terrain["city"] = TerrainData.new("city", "City", 1)
+	terrain["city"] = TerrainData.new("city", "City", 0)
 	terrain["forest"] = TerrainData.new("forest", "Forest", 2)
 	terrain["water"] = TerrainData.new("water", "Water", 3)
 	terrain["NONE"] = TerrainData.new(".", ".", 0)
+	
+func setupUnitTypes():
+	unitTypes["infantry"] = UnitType.new("res://assets/soldier.png", "infantry", 100, "artillery", 3)
+	unitTypes["tank"] = UnitType.new("res://assets/tank.png", "tank", 90, "infantry", 4)
+	unitTypes["artillery"] = UnitType.new("res://assets/artillery.png", "artillery", 110, "tank", 2)
 
 func getEmptyCell(pos):
 	var emptyCell = CellData.new()
@@ -73,7 +80,7 @@ func processDeaths(combatResult:CombatResult) -> void:
 		return
 		
 	if (combatResult.attackerDead):
-		factions[combatResult.attackerCell.unit.faction].unitPositions.erase(combatResult.attackerCell.pos)
+		factions[combatResult.attackerUnit.faction].unitPositions.erase(combatResult.attackerCell.pos)
 		mapUnits[combatResult.attackerUnit.mapUnitId].destroySelf()
 		mapUnits.erase(combatResult.attackerUnit.mapUnitId)
 		combatResult.attackerCell.unit = null

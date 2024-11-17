@@ -21,11 +21,19 @@ static func attack(attackerCell:CellData, defenderCell:CellData) -> CombatResult
 	result.attackerUnit = attackerCell.unit
 	result.defenderUnit = defenderCell.unit
 	
-	result.attackerDamage = randf_range(probabilities["attackerMin"], probabilities["attackerMax"])
-	result.defenderDamage = randf_range(probabilities["defenderMin"], probabilities["defenderMax"])
+	result.attackerDamage = calculateDamage(defenderCell.unit, attackerCell.unit)
+	result.defenderDamage = calculateDamage(attackerCell.unit, defenderCell.unit)
 	attackerCell.unit.hp -= result.attackerDamage
 	defenderCell.unit.hp -= result.defenderDamage
 	
 	result.attackerDead = (attackerCell.unit.hp < 0)
 	result.defenderDead = (defenderCell.unit.hp < 0)
 	return result
+
+static func calculateDamage(a:Unit, b:Unit):
+	var probability = randf_range(5, 50)
+	#Roll with advantage, roll 2 pick the higher one
+	if (a.type.advantageVersus == b.type.name):
+		var probability2 = randf_range(5, 75)
+		return max(probability, probability2)
+	return probability

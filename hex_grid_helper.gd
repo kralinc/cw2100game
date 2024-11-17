@@ -71,26 +71,21 @@ func getPath(from:Vector2i, to:Vector2i, allowPartial:bool):
 	var endSpaceHasEnemy = false
 	if (mapData[to].unit != null and mapData[to].unit.faction != mapData[from].unit.faction):
 		endSpaceHasEnemy = true
-		freeCell(to)
+		setCellOccupied(to, false)
 	var path = astar.get_point_path(getAStarCellId(from), getAStarCellId(to), allowPartial)
 	var integerPath = []
 	for cell in path:
 		integerPath.push_back(Vector2i(int(cell.x), int(cell.y)))
 	if (endSpaceHasEnemy):
-		occupyCell(to)
-	return integerPath
+		setCellOccupied(to, true)
+	return integerPath.slice(1) #remove the first tile as we don't want to use it in movement
 	
 func getAStarCellId(cell:Vector2i)->int:
 	var x_shifted = cell.x + 10000
 	var y_shifted = cell.y + 10000
 	return (x_shifted + y_shifted) * (x_shifted + y_shifted + 1) / 2 + y_shifted
 
-func occupyCell(cell:Vector2i)->void:
+func setCellOccupied(cell:Vector2i, occupied:bool)->void:
 	var idx = getAStarCellId(cell)
 	if (astar.has_point(idx)):
-		astar.set_point_disabled(idx, true)
-
-func freeCell(cell:Vector2i)->void:
-	var idx = getAStarCellId(cell)
-	if (astar.has_point(idx)):
-		astar.set_point_disabled(idx, false)
+		astar.set_point_disabled(idx, occupied)

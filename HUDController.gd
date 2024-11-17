@@ -31,7 +31,7 @@ func _on_map_hover_data(data:CellData) -> void:
 		
 func setUnitInfo(unit:Unit) -> void:
 	$UnitInfo.visible = true
-	$UnitInfo/UnitTypeLabel.text = unit.name
+	$UnitInfo/UnitTypeLabel.text = unit.type.name
 	$UnitInfo/HealthBar.value = unit.hp
 	var healthPercentage:float = unit.hp / 100.0
 	$UnitInfo/HealthBar.modulate = Color(1 - healthPercentage, healthPercentage, 0)

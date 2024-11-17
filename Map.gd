@@ -62,7 +62,7 @@ func doHoverPathHighlight():
 		
 func highlightMoveRange():
 	for cell in selectedUnitRange.keys():
-		if (cellContainsEnemyUnit(cell)):
+		if (cellContainsEnemyUnit(cell) and $FOW.get_cell_tile_data(cell) == null):
 			$Highlight.set_cell(cell, 0, Vector2i(0,0), 2)
 		else:
 			$Highlight.set_cell(cell, 0, Vector2i(0,0), 1)
@@ -80,7 +80,7 @@ func clickMove(pos_clicked):
 	if (path.is_empty()):
 		return
 	var start = selectedUnit.position
-	path = path.slice(1) #remove the first cell because we don't want to use it in movement
+	#path = path.slice(1) #remove the first cell because we don't want to use it in movement
 	selectedUnit.movePath = path
 	moveUnit(selectedUnit, start)
 	
@@ -90,13 +90,23 @@ func moveUnit(unit:Unit, start:Vector2i):
 	var dead = false
 	var canMove = true
 	var combatResult = null
-	while not unit.movePath.is_empty():
+	while not unit.movePath.is_empty() and remainingMovement > 0:
 		var cell = unit.movePath.pop_front()
-		if (Global.mapData[cell].unit != null and Global.mapData[cell].unit.faction != unit.faction):
-			combatResult = CombatHelper.attack(Global.mapData[unit.position], Global.mapData[cell])
-			dead = combatResult.attackerDead
-			canMove = combatResult.defenderDead
-			remainingMovement = 0
+		if Global.mapData[cell].unit != null:
+			if Global.mapData[cell].unit.faction != unit.faction:
+				#enemy unit, initiate combat
+				combatResult = CombatHelper.attack(Global.mapData[unit.position], Global.mapData[cell])
+				dead = combatResult.attackerDead
+				canMove = combatResult.defenderDead
+				remainingMovement = 0
+			else:
+				#this likely happens if you've autopathed multiple units and they overlap.
+				#recalculate the movePath to go around.
+				if not unit.movePath.is_empty():
+					unit.movePath = Global.hgh.getPath(unit.position, unit.movePath.pop_back(), true)
+					continue
+				else:
+					break
 			
 		if not dead and canMove:
 			mapUnitPath.push_back(Global.mapData[cell].worldPos)
@@ -111,17 +121,17 @@ func moveUnit(unit:Unit, start:Vector2i):
 				break
 		else:
 			break
-	Global.hgh.freeCell(start)
+	Global.hgh.setCellOccupied(start, false)
 	Global.processDeaths(combatResult)
+	updateFowAroundCell(unit.position)
+	Global.factions[unit.faction].unitPositions.erase(start)
 	if not dead:
 		if (remainingMovement <= 0):
 			Global.mapUnits[unit.mapUnitId].setMovementIndicatorEmpty(true)
 		unit.movePoints = remainingMovement if remainingMovement >= 0 else 0
-		Global.factions[unit.faction].unitPositions.erase(start)
 		Global.factions[unit.faction].unitPositions[unit.position] = true
-		Global.hgh.occupyCell(unit.position)
+		Global.hgh.setCellOccupied(unit.position, true)
 		Global.mapUnits[unit.mapUnitId].startMove(mapUnitPath)
-		updateFowAroundCell(unit.position)
 
 func takeEnemyTerritory(unitCell:Vector2i, unit:Unit) -> void:
 	var faction = Global.factions[unit.faction]
@@ -137,7 +147,7 @@ func updateFowAroundCell(cell:Vector2i):
 	for outerCell in Global.hgh.getNeighbors(cell):
 		$FOW.set_cell(outerCell, -1)
 		if Global.mapData[outerCell].unit != null:
-			Global.mapUnits[Global.mapData[outerCell].unit.mapUnitId].visible = true
+			setUnitVisible(outerCell, true)
 
 func getMoveRange(start:Vector2i, range:int) -> Dictionary:
 	var frontier = PriorityQueue.new()
@@ -169,21 +179,21 @@ func initUnits():
 		var mapUnit = unitScene.instantiate()
 		var unit = Unit.new()
 		var mapPos = $Terrain.map_to_local(pos)
+		var unitTypeName = $CombatUnitInit.get_cell_tile_data(pos).get_custom_data("type")
+		unit.type = Global.unitTypes[unitTypeName]
 		unit.position = pos
-		unit.hp = 100.0
-		unit.movePoints = 3
-		unit.defaultMovePoints = unit.movePoints
+		unit.hp = unit.type.hp
+		unit.movePoints = unit.type.movementPoints
 		unit.faction = getFactionAtPos(pos)
 		Global.factions[unit.faction].unitPositions[pos] = true
-		unit.name = "Infantry"
 		mapUnit.position = mapPos
 		mapUnit.mapPosition = pos
-		mapUnit.setInfo(Global.factions[unit.faction])
+		mapUnit.setInfo(Global.factions[unit.faction], unit.type)
 		Global.mapUnits[Global.mapUnitsIncId] = mapUnit
 		unit.mapUnitId = Global.mapUnitsIncId
 		Global.mapUnitsIncId += 1
 		Global.mapData[pos].unit = unit
-		Global.hgh.occupyCell(pos)
+		Global.hgh.setCellOccupied(pos, true)
 		add_child(mapUnit)
 	$CombatUnitInit.clear()
 	
@@ -242,11 +252,11 @@ func nextTurnFogOfWar(player:int):
 		if cell.faction != player:
 			$FOW.set_cell(cell.pos, 0, Vector2i(0,0))
 			if cell.unit != null:
-				Global.mapUnits[cell.unit.mapUnitId].visible = false
+				setUnitVisible(cell.pos, false)
 		else:
 			$FOW.set_cell(cell.pos, -1)
 			if cell.unit != null:
-				Global.mapUnits[cell.unit.mapUnitId].visible = true
+				setUnitVisible(cell.pos, true)
 				
 	for unitPos in Global.factions[player].unitPositions:
 		var unit = Global.mapData[unitPos].unit
@@ -254,14 +264,19 @@ func nextTurnFogOfWar(player:int):
 			for outerCell in Global.hgh.getNeighbors(innerCell):
 				$FOW.set_cell(outerCell, -1)
 				if Global.mapData[outerCell].unit != null:
-					Global.mapUnits[Global.mapData[outerCell].unit.mapUnitId].visible = true
+					setUnitVisible(outerCell, true)
+					
+func setUnitVisible(cell:Vector2i, visible:bool):
+	var cellData = Global.mapData[cell]
+	Global.mapUnits[cellData.unit.mapUnitId].visible = visible
+	Global.hgh.setCellOccupied(cell, visible)
 
 func nextTurnUnitSetup(player:int):
 	for id in Global.mapUnits:
 		var cell = Global.mapUnits[id].mapPosition
 		var unit = Global.mapData[cell].unit
 		if unit.faction == player:
-			unit.movePoints = unit.defaultMovePoints
+			unit.movePoints = unit.type.movementPoints
 			Global.mapUnits[id].setMovementIndicatorVisible(true)
 			Global.mapUnits[id].setMovementIndicatorEmpty(false)
 		else:
@@ -269,7 +284,8 @@ func nextTurnUnitSetup(player:int):
 		
 
 func nextTurn():
-	for cell in Global.factions[Global.currentPlayer].unitPositions:
+	var unitPositionsCopy = Global.factions[Global.currentPlayer].unitPositions.duplicate()
+	for cell in unitPositionsCopy:
 		var unit = Global.mapData[cell].unit
 		if not unit.movePath.is_empty():
 			moveUnit(unit, unit.position)

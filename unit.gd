@@ -10,10 +10,11 @@ func _physics_process(delta: float) -> void:
 	if (moving):
 		moveAlongPath()
 
-func setInfo(faction:Faction):
+func setInfo(faction:Faction, type:UnitType):
 	$Hex.modulate = faction.color
 	$Hex.modulate.a = hexAlpha
 	$Flag.texture = faction.flag
+	$UnitSprite.texture = type.sprite
 
 func startMove(path:PackedVector2Array) -> void:
 	moving = true

@@ -2,12 +2,13 @@ extends Resource
 
 class_name Unit
 
-var name:String
+var type:UnitType
 var hp:float
 var movePoints:int
-var defaultMovePoints:int
 var faction:int
 var position:Vector2i
 var movePath:Array
 var mapUnitId:int
-var baseCombatPower:float
+#delete these
+#var defaultMovePoints:int
+#var name:String
