@@ -12,6 +12,7 @@ var unitTypes:Dictionary
 var currentPlayer:int = 1
 
 var turn = 1
+var interactionState:String
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:

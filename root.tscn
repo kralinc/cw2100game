@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=4 uid="uid://ckoelvk7ocqdp"]
+[gd_scene load_steps=33 format=4 uid="uid://ckoelvk7ocqdp"]
 
 [ext_resource type="Texture2D" uid="uid://b1bj3hpo1bg0o" path="res://assets/map_low.jpeg" id="1_1v1ie"]
 [ext_resource type="Texture2D" uid="uid://ciwbye1qop7nx" path="res://assets/hex_atlas.png" id="1_n0h2r"]
@@ -19,6 +19,12 @@
 
 [sub_resource type="CurveTexture" id="CurveTexture_0ystd"]
 curve = SubResource("Curve_noobe")
+
+[sub_resource type="LabelSettings" id="LabelSettings_8kvbf"]
+font_size = 17
+outline_size = 1
+shadow_size = 10
+shadow_color = Color(0, 0, 0, 0.560784)
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dg4gh"]
 texture = ExtResource("1_n0h2r")
@@ -208,6 +214,58 @@ metadata/_edit_lock_ = true
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("4_kr5ul")
 
+[node name="TopPanel" type="ColorRect" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 31.0
+grow_horizontal = 2
+color = Color(0.343931, 0.183065, 0.0750184, 1)
+metadata/_edit_lock_ = true
+
+[node name="Flag" type="TextureRect" parent="HUD/TopPanel"]
+layout_mode = 0
+offset_top = 1.0
+offset_right = 44.0
+offset_bottom = 30.0
+texture = ExtResource("4_wtva4")
+expand_mode = 3
+
+[node name="NameLabel" type="Label" parent="HUD/TopPanel"]
+layout_mode = 0
+offset_left = 49.0
+offset_top = 3.0
+offset_right = 318.0
+offset_bottom = 27.0
+text = "United States of America"
+label_settings = SubResource("LabelSettings_8kvbf")
+autowrap_mode = 2
+
+[node name="TurnsUntilReinforceLabel" type="Label" parent="HUD/TopPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -113.5
+offset_right = 113.5
+offset_bottom = 23.0
+grow_horizontal = 2
+text = "Turns until reinforcement: 99"
+
+[node name="TurnLabel" type="Label" parent="HUD/TopPanel"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -94.0
+offset_top = -11.5
+offset_right = -21.0
+offset_bottom = 11.5
+grow_horizontal = 0
+grow_vertical = 2
+text = "Turn: 999"
+
 [node name="Button" type="Button" parent="HUD"]
 anchors_preset = 4
 anchor_top = 0.5
@@ -315,32 +373,16 @@ offset_bottom = 65.0
 text = "Movement: 3"
 
 [node name="Button2" type="Button" parent="HUD"]
-offset_right = 8.0
-offset_bottom = 8.0
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -1.0
+offset_top = -54.0
+offset_right = 85.0
+offset_bottom = -23.0
+grow_vertical = 2
+size_flags_horizontal = 0
 text = "Next Turn"
-
-[node name="PlayerInfo" type="ColorRect" parent="HUD"]
-offset_left = 2.0
-offset_top = 31.0
-offset_right = 215.0
-offset_bottom = 128.0
-color = Color(0.241156, 0.241156, 0.241156, 1)
-
-[node name="Flag" type="TextureRect" parent="HUD/PlayerInfo"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-texture = ExtResource("4_wtva4")
-expand_mode = 3
-
-[node name="NameLabel" type="Label" parent="HUD/PlayerInfo"]
-layout_mode = 0
-offset_left = 64.0
-offset_top = -2.0
-offset_right = 208.0
-offset_bottom = 51.0
-text = "United States of America"
-autowrap_mode = 2
 
 [node name="Map" type="Node2D" parent="."]
 script = ExtResource("2_qdjwj")

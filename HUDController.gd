@@ -38,8 +38,10 @@ func setUnitInfo(unit:Unit) -> void:
 	$UnitInfo/MovementLabel.text = "Movement: %s" % unit.movePoints
 
 func setPlayerInfo() -> void:
-	$PlayerInfo/NameLabel.text = Global.factions[Global.currentPlayer].fullName
-	$PlayerInfo/Flag.texture = Global.factions[Global.currentPlayer].flag
+	$TopPanel/NameLabel.text = Global.factions[Global.currentPlayer].fullName
+	$TopPanel/Flag.texture = Global.factions[Global.currentPlayer].flag
+	$TopPanel/TurnLabel.text = "Turn: %d" % (Global.turn / 4)
+	$TopPanel/TurnsUntilReinforceLabel.text = "Turns until reinforcement: %d" % (10 - ((Global.turn / 4) % 10))
 
 
 func _on_map_next_turn() -> void:
