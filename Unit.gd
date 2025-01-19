@@ -12,3 +12,6 @@ var mapUnitId:int
 #delete these
 #var defaultMovePoints:int
 #var name:String
+
+func hasAdvantageAgainst(other:Unit):
+	return type.advantageVersus == other.type.name

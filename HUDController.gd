@@ -24,18 +24,18 @@ func _on_map_hover_data(data:CellData) -> void:
 	$TileInfo/Flag.texture = null if faction == null else faction.flag
 	$TileInfo/MoveCostLabel.text = "Movement cost: %s" % data.movementCost
 
-	if (data.unit != null):
-		setUnitInfo(data.unit)
-	else:
-		$UnitInfo.visible = false
+	
+func _on_map_unit_info_data(data: Unit) -> void:
+	setUnitInfo(data)
 		
 func setUnitInfo(unit:Unit) -> void:
-	$UnitInfo.visible = true
-	$UnitInfo/UnitTypeLabel.text = unit.type.name
-	$UnitInfo/HealthBar.value = unit.hp
-	var healthPercentage:float = unit.hp / 100.0
-	$UnitInfo/HealthBar.modulate = Color(1 - healthPercentage, healthPercentage, 0)
-	$UnitInfo/MovementLabel.text = "Movement: %s" % unit.movePoints
+	if (unit == null):
+		$UnitInfo.visible = false
+	else:
+		$UnitInfo.visible = true
+		$UnitInfo/UnitTypeLabel.text = unit.type.name
+		setHealthBar($UnitInfo/HealthBar, unit.hp)
+		$UnitInfo/MovementLabel.text = "Movement: %s" % unit.movePoints
 
 func setPlayerInfo() -> void:
 	$TopPanel/NameLabel.text = Global.factions[Global.currentPlayer].fullName
@@ -46,3 +46,39 @@ func setPlayerInfo() -> void:
 
 func _on_map_next_turn() -> void:
 	setPlayerInfo()
+
+
+func _on_map_combat_panel_data(data: CombatData) -> void:
+	if data == null:
+		$CombatPanel.visible = false
+	else:
+		$CombatPanel.visible = true
+		var attackerUnit:Unit = data.attackerCell.unit
+		var defenderUnit:Unit = data.defenderCell.unit
+		var attackerFaction:Faction = Global.factions[attackerUnit.faction]
+		var defenderFaction:Faction = Global.factions[defenderUnit.faction]
+		$CombatPanel/AttackerFlag.texture = attackerFaction.flag
+		$CombatPanel/DefenderFlag.texture = defenderFaction.flag
+		$CombatPanel/AttackerLabel.text = attackerUnit.type.name
+		$CombatPanel/DefenderLabel.text = defenderUnit.type.name
+		setHealthBar($CombatPanel/AttackerHealthBarHigh, attackerUnit.hp - data.attackerMinDamage)
+		setHealthBar($CombatPanel/AttackerHealthBarLow, attackerUnit.hp - data.attackerMaxDamage)
+		$CombatPanel/AttackerDamageLabel.text = "%d - %d" % [data.attackerMinDamage, data.attackerMaxDamage]
+		setHealthBar($CombatPanel/DefenderHealthBarHigh, defenderUnit.hp - data.defenderMinDamage)
+		setHealthBar($CombatPanel/DefenderHealthBarLow, defenderUnit.hp - data.defenderMaxDamage)
+		$CombatPanel/DefenderDamageLabel.text = "%d - %d" % [data.defenderMinDamage, data.defenderMaxDamage]
+		
+		$CombatPanel/AdvantageLabel.visible = true
+		if attackerUnit.hasAdvantageAgainst(defenderUnit):
+			$CombatPanel/AdvantageLabel.text = "ADVANTAGE"
+			$CombatPanel/AdvantageLabel.modulate = Color(0,1,0)
+		elif defenderUnit.hasAdvantageAgainst(attackerUnit):
+			$CombatPanel/AdvantageLabel.text = "DISADVANTAGE"
+			$CombatPanel/AdvantageLabel.modulate = Color(1,0,0)
+		else:
+			$CombatPanel/AdvantageLabel.visible = false
+		
+func setHealthBar(bar:ProgressBar, value:float):
+	var healthPercentage = value / 100.0
+	bar.modulate = Color(1 - healthPercentage, healthPercentage, 0)
+	bar.value = value

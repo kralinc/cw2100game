@@ -1,6 +1,8 @@
 extends Node2D
 
 signal hover_data(data:CellData)
+signal combat_panel_data(data:CombatData)
+signal unit_info_data(data:Unit)
 signal next_turn()
 
 var hoveredCell = Vector2i()
@@ -27,19 +29,32 @@ func _input(event):
 	if event is InputEventMouseMotion:
 		var global_pos = get_global_mouse_position()
 		var pos_hovered = $Terrain.local_to_map(global_pos)
-		if (Global.mapData.has(pos_hovered)):
-			hover_data.emit(Global.mapData[pos_hovered])
-		else:
-			hover_data.emit(Global.getEmptyCell(pos_hovered))
-		hoveredCell = pos_hovered
+		if hoveredCell != pos_hovered:
+			if (Global.mapData.has(pos_hovered)):
+				hover_data.emit(Global.mapData[pos_hovered])
+				if (Global.mapData[pos_hovered].unit != null and getUnitVisible(pos_hovered)):
+					unit_info_data.emit(Global.mapData[pos_hovered].unit)
+				else:
+					unit_info_data.emit(null)
+				if (selectedUnit != null and cellContainsEnemyUnit(pos_hovered) and getUnitVisible(pos_hovered)):
+					var combatData = CombatHelper.getCombatData(Global.mapData[selectedUnit.position], Global.mapData[pos_hovered])
+					combat_panel_data.emit(combatData)
+				else:
+					combat_panel_data.emit(null)
+			else:
+				hover_data.emit(Global.getEmptyCell(pos_hovered))
+				combat_panel_data.emit(null)
+			hoveredCell = pos_hovered
 
 func doHighlight():
 	$Highlight.clear()
 	if (clickedCell != null):
 		doClickedHighlight(clickedCell)
 	highlightMoveRange()
+	if (selectedUnit != null or (selectedUnit == null and cellContainsFriendlyUnit(hoveredCell))):
+		var unit = selectedUnit if selectedUnit != null else Global.mapData[hoveredCell].unit
+		doPathHighlight(unit)
 	if (selectedUnit != null):
-		doPathHighlight()
 		doHoverPathHighlight()
 	$Highlight.set_cell(hoveredCell, 0, Vector2(0,0))
 		
@@ -48,8 +63,8 @@ func doClickedHighlight(pos_clicked):
 	$Highlight.set_cell(pos_clicked, 0, Vector2i(0,0), 1)
 	clickedCell = pos_clicked
 	
-func doPathHighlight():
-	for cell in selectedUnit.movePath:
+func doPathHighlight(unit:Unit):
+	for cell in unit.movePath:
 		$Highlight.set_cell(cell, 0, Vector2i(0,0), 3)
 	
 func doHoverPathHighlight():
@@ -230,10 +245,10 @@ func getFeatureAtPos(pos):
 	return Global.terrain["NONE"] if tileData == null else Global.terrain[tileData.get_custom_data("name")]
 	
 func cellContainsEnemyUnit(pos):
-	return Global.mapData.has(pos) and Global.mapData[pos].unit != null and selectedUnit != null and Global.mapData[pos].unit.faction != selectedUnit.faction
+	return Global.mapData.has(pos) and Global.mapData[pos].unit != null and Global.mapData[pos].unit.faction != Global.currentPlayer
 	
 func cellContainsFriendlyUnit(pos):
-	return Global.mapData.has(pos) and Global.mapData[pos].unit != null and selectedUnit != null and Global.mapData[pos].unit.faction == selectedUnit.faction
+	return Global.mapData.has(pos) and Global.mapData[pos].unit != null and Global.mapData[pos].unit.faction == Global.currentPlayer
 	
 func clearHighlights():
 	clickedCell = null
@@ -270,6 +285,9 @@ func setUnitVisible(cell:Vector2i, visible:bool):
 	var cellData = Global.mapData[cell]
 	Global.mapUnits[cellData.unit.mapUnitId].visible = visible
 	Global.hgh.setCellOccupied(cell, visible)
+	
+func getUnitVisible(cell:Vector2i):
+	return Global.mapData.has(cell) and Global.mapData[cell].unit != null and $FOW.get_cell_tile_data(cell) == null
 
 func nextTurnUnitSetup(player:int):
 	for id in Global.mapUnits:
@@ -295,6 +313,7 @@ func nextTurn():
 	
 	nextTurnFogOfWar(Global.currentPlayer)
 	nextTurnUnitSetup(Global.currentPlayer)
+	clearHighlights()
 	
 	next_turn.emit()
 

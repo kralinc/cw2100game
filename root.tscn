@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=4 uid="uid://ckoelvk7ocqdp"]
+[gd_scene load_steps=40 format=4 uid="uid://ckoelvk7ocqdp"]
 
 [ext_resource type="Texture2D" uid="uid://b1bj3hpo1bg0o" path="res://assets/map_low.jpeg" id="1_1v1ie"]
 [ext_resource type="Texture2D" uid="uid://ciwbye1qop7nx" path="res://assets/hex_atlas.png" id="1_n0h2r"]
@@ -9,6 +9,9 @@
 [ext_resource type="Texture2D" uid="uid://ca2eygog0jy3n" path="res://assets/otherflagtest.png" id="4_wtva4"]
 [ext_resource type="Texture2D" uid="uid://bknh2u8xwctne" path="res://assets/hex_white.png" id="5_k048e"]
 [ext_resource type="Texture2D" uid="uid://bn1y5f27it6u8" path="res://assets/soldier.png" id="7_602uu"]
+[ext_resource type="Shader" path="res://tile.gdshader" id="7_mgtbv"]
+[ext_resource type="Texture2D" uid="uid://c5m1sy60jusm7" path="res://assets/grass2.png" id="8_bhfvc"]
+[ext_resource type="Texture2D" uid="uid://8j7pyfgrf322" path="res://assets/water_128px.png" id="9_2h1s5"]
 [ext_resource type="PackedScene" uid="uid://6m37eo4vu10a" path="res://unit.tscn" id="9_7ffpw"]
 [ext_resource type="Shader" path="res://hex_outline.gdshader" id="9_tmbs5"]
 [ext_resource type="Texture2D" uid="uid://54pivf6vx4mw" path="res://assets/tank.png" id="10_gobwl"]
@@ -26,6 +29,23 @@ outline_size = 1
 shadow_size = 10
 shadow_color = Color(0, 0, 0, 0.560784)
 
+[sub_resource type="LabelSettings" id="LabelSettings_mb5gn"]
+font_size = 31
+shadow_size = 0
+
+[sub_resource type="LabelSettings" id="LabelSettings_uvybh"]
+font_size = 26
+shadow_size = 4
+shadow_color = Color(0, 0, 0, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_c8gda"]
+shader = ExtResource("7_mgtbv")
+shader_parameter/overlay_texture = ExtResource("8_bhfvc")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lvj5i"]
+shader = ExtResource("7_mgtbv")
+shader_parameter/overlay_texture = ExtResource("9_2h1s5")
+
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dg4gh"]
 texture = ExtResource("1_n0h2r")
 texture_region_size = Vector2i(74, 64)
@@ -35,12 +55,14 @@ texture_region_size = Vector2i(74, 64)
 1:0/0 = 0
 1:0/1 = 1
 1:0/1/modulate = Color(0.150002, 0.532873, 0, 1)
+1:0/1/material = SubResource("ShaderMaterial_c8gda")
 1:0/1/custom_data_0 = "plains"
 1:0/2 = 2
 1:0/2/modulate = Color(0.744421, 0.717757, 0.319215, 1)
 1:0/2/custom_data_0 = "desert"
 1:0/3 = 3
 1:0/3/modulate = Color(0, 0.317647, 0.803922, 1)
+1:0/3/material = SubResource("ShaderMaterial_lvj5i")
 1:0/3/custom_data_0 = "water"
 2:0/next_alternative_id = 2
 2:0/0 = 0
@@ -384,6 +406,138 @@ grow_vertical = 2
 size_flags_horizontal = 0
 text = "Next Turn"
 
+[node name="CombatPanel" type="ColorRect" parent="HUD"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -199.0
+offset_top = -148.0
+offset_right = 199.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(0.258824, 0.258824, 0.258824, 1)
+metadata/_edit_lock_ = true
+
+[node name="AttackerLabel" type="Label" parent="HUD/CombatPanel"]
+layout_mode = 0
+offset_left = 62.0
+offset_top = 6.0
+offset_right = 182.0
+offset_bottom = 29.0
+text = "ATTACKERRRRR"
+
+[node name="DefenderFlag" type="TextureRect" parent="HUD/CombatPanel"]
+offset_left = 341.0
+offset_right = 398.0
+offset_bottom = 38.0
+texture = ExtResource("4_wtva4")
+expand_mode = 3
+
+[node name="AttackerFlag" type="TextureRect" parent="HUD/CombatPanel"]
+offset_right = 57.0
+offset_bottom = 38.0
+texture = ExtResource("4_wtva4")
+expand_mode = 3
+
+[node name="DefenderLabel" type="Label" parent="HUD/CombatPanel"]
+offset_left = 212.0
+offset_top = 6.0
+offset_right = 335.0
+offset_bottom = 29.0
+text = "DEFENDERRRRR"
+horizontal_alignment = 2
+
+[node name="AttackerHealthBarHigh" type="ProgressBar" parent="HUD/CombatPanel"]
+modulate = Color(0, 1, 0.0588235, 1)
+offset_top = 38.0
+offset_right = 26.0
+offset_bottom = 148.0
+step = 0.1
+value = 17.4
+fill_mode = 3
+show_percentage = false
+
+[node name="AttackerHealthBarLow" type="ProgressBar" parent="HUD/CombatPanel"]
+modulate = Color(0, 1, 0.0588235, 1)
+offset_left = 26.0
+offset_top = 38.0
+offset_right = 52.0
+offset_bottom = 148.0
+step = 0.1
+value = 17.4
+fill_mode = 3
+show_percentage = false
+
+[node name="AttackerDamageLabel" type="Label" parent="HUD/CombatPanel"]
+layout_mode = 0
+offset_left = 68.0
+offset_top = 55.0
+offset_right = 148.0
+offset_bottom = 99.0
+text = "0-100"
+label_settings = SubResource("LabelSettings_mb5gn")
+
+[node name="DefenderHealthBarHigh" type="ProgressBar" parent="HUD/CombatPanel"]
+modulate = Color(0, 1, 0.0588235, 1)
+offset_left = 372.0
+offset_top = 38.0
+offset_right = 398.0
+offset_bottom = 148.0
+step = 0.1
+value = 17.4
+fill_mode = 3
+show_percentage = false
+
+[node name="DefenderHealthBarLow" type="ProgressBar" parent="HUD/CombatPanel"]
+modulate = Color(0, 1, 0.0588235, 1)
+offset_left = 346.0
+offset_top = 38.0
+offset_right = 372.0
+offset_bottom = 148.0
+step = 0.1
+value = 17.4
+fill_mode = 3
+show_percentage = false
+
+[node name="DefenderDamageLabel" type="Label" parent="HUD/CombatPanel"]
+offset_left = 243.0
+offset_top = 55.0
+offset_right = 324.0
+offset_bottom = 99.0
+text = "0-100"
+label_settings = SubResource("LabelSettings_mb5gn")
+
+[node name="AdvantageLabel" type="Label" parent="HUD/CombatPanel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -99.0
+offset_top = -47.0
+offset_right = 98.0
+offset_bottom = -11.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "DISADVANTAGE"
+label_settings = SubResource("LabelSettings_uvybh")
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="HUD/CombatPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -71.0
+offset_top = 32.0
+offset_right = 71.0
+offset_bottom = 55.0
+grow_horizontal = 2
+text = "Projected Damage"
+
 [node name="Map" type="Node2D" parent="."]
 script = ExtResource("2_qdjwj")
 unitScene = ExtResource("9_7ffpw")
@@ -425,6 +579,8 @@ metadata/_edit_lock_ = true
 
 [connection signal="pressed" from="HUD/Button" to="Map" method="_on_button_pressed"]
 [connection signal="pressed" from="HUD/Button2" to="Map" method="_on_button_2_pressed"]
+[connection signal="combat_panel_data" from="Map" to="HUD" method="_on_map_combat_panel_data"]
 [connection signal="hover_data" from="Map" to="HUD" method="_on_map_hover_data"]
 [connection signal="next_turn" from="Map" to="HUD" method="_on_map_next_turn"]
+[connection signal="unit_info_data" from="Map" to="HUD" method="_on_map_unit_info_data"]
 [connection signal="input_event" from="Map/ClickHandler" to="Map" method="_on_click_handler_input_event"]
