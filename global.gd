@@ -10,8 +10,12 @@ var factions:Dictionary
 var terrain:Dictionary
 var unitTypes:Dictionary
 var currentPlayer:int = 1
+var numImportantTiles:int = 0
+var specialNames:Dictionary
 
 var turn = 1
+var turnsUntilReinforcement = 11
+var reinforcementModeCounter = 1
 var interactionState:String
 
 # Called when the node enters the scene tree for the first time.
@@ -19,6 +23,7 @@ func _ready() -> void:
 	setupFactions()
 	setupTerrain()
 	setupUnitTypes()
+	setupSpecialNames()
 
 func setupFactions():
 	var none = Faction.new()
@@ -85,6 +90,7 @@ func processDeaths(combatResult:CombatResult) -> void:
 		mapUnits[combatResult.attackerUnit.mapUnitId].destroySelf()
 		mapUnits.erase(combatResult.attackerUnit.mapUnitId)
 		combatResult.attackerCell.unit = null
+		Global.hgh.setCellOccupied(combatResult.attackerCell.pos, false)
 		
 	if (combatResult.defenderDead):
 		factions[combatResult.defenderUnit.faction].unitPositions.erase(combatResult.defenderCell.pos)
@@ -92,3 +98,9 @@ func processDeaths(combatResult:CombatResult) -> void:
 		mapUnits.erase(combatResult.defenderUnit.mapUnitId)
 		if (combatResult.attackerDead):
 			combatResult.defenderCell.unit = null
+			Global.hgh.setCellOccupied(combatResult.defenderCell.pos, false)
+
+func setupSpecialNames():
+	specialNames[Vector2i(66,6)] = "New York City"
+	specialNames[Vector2i(65,6)] = "Newark"
+	specialNames[Vector2i(44,9)] = "Chicago"

@@ -10,3 +10,4 @@ var feature:TerrainData
 var movementCost:int
 var faction:int
 var unit:Unit
+var important:bool
