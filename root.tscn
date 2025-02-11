@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=4 uid="uid://ckoelvk7ocqdp"]
+[gd_scene load_steps=43 format=4 uid="uid://ckoelvk7ocqdp"]
 
 [ext_resource type="Texture2D" uid="uid://ciwbye1qop7nx" path="res://assets/hex_atlas.png" id="1_n0h2r"]
 [ext_resource type="Texture2D" uid="uid://dnvql35w81c5r" path="res://assets/hex_highlight.png" id="1_tmjrh"]
@@ -17,6 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://c17bukt8sdv44" path="res://assets/dot.png" id="11_g7vyr"]
 [ext_resource type="Texture2D" uid="uid://jxfqm5qawyd0" path="res://assets/artillery.png" id="11_mwpoe"]
 [ext_resource type="Texture2D" uid="uid://culy7o1ud8tlj" path="res://assets/hex_important.png" id="11_p7a7c"]
+[ext_resource type="Texture2D" uid="uid://cn6o3au8veppb" path="res://assets/selectbox.png" id="18_oggwp"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_wuh61"]
 font_size = 23
@@ -628,8 +629,13 @@ scale = Vector2(2, 2)
 shape = SubResource("RectangleShape2D_5npus")
 metadata/_edit_lock_ = true
 
-[node name="SelectBox" type="ColorRect" parent="Map"]
+[node name="SelectBox" type="NinePatchRect" parent="Map"]
 visible = false
+texture = ExtResource("18_oggwp")
+patch_margin_left = 12
+patch_margin_top = 12
+patch_margin_right = 12
+patch_margin_bottom = 12
 
 [connection signal="pressed" from="HUD/Button" to="Map" method="_on_button_pressed"]
 [connection signal="pressed" from="HUD/Button2" to="Map" method="_on_button_2_pressed"]
