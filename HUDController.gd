@@ -49,7 +49,7 @@ func _on_map_update_top_panel() -> void:
 	updateTopPanel()
 	
 func updateTopPanel():
-	$TopPanelExtra/ImportantLabel.text = "Important Tiles: %d" % Global.factions[Global.currentPlayer].numImportantTiles
+	$TopPanelExtra/ImportantLabel.text = "Important Tiles: %d" % Global.factions[Global.currentPlayer].importantTiles.size()
 
 func _on_map_combat_panel_data(data: CombatData) -> void:
 	if data == null:

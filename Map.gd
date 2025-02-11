@@ -13,6 +13,11 @@ enum {PLAY_MODE, REINFORCEMENT_MODE}
 var inputMode = PLAY_MODE
 var hoveredCell = Vector2i()
 var clickedCell = Vector2i()
+#Used for click-and-drag
+var clickedWorldPos = Vector2()
+var hoveredWorldPos = Vector2()
+var selectedUnitPositions:Dictionary
+
 var hoverPath = []
 var selectedUnit:Unit
 var selectedUnitRange:Dictionary
@@ -38,18 +43,22 @@ func doHighlight():
 	$Highlight.clear()
 	if (clickedCell != null):
 		doClickedHighlight(clickedCell)
+	highlightUnitMultiSelect()
 	highlightMoveRange()
 	if (selectedUnit != null or (selectedUnit == null and cellContainsFriendlyUnit(hoveredCell))):
 		var unit = selectedUnit if selectedUnit != null else Global.mapData[hoveredCell].unit
 		doPathHighlight(unit)
 	if (selectedUnit != null):
 		doHoverPathHighlight()
+	if inputMode == REINFORCEMENT_MODE:
+		highlightReinforcementPlacementRange(Global.factions[Global.currentPlayer])
 	$Highlight.set_cell(hoveredCell, 0, Vector2(0,0))
 		
 func doClickedHighlight(pos_clicked):
-	$Highlight.set_cell(clickedCell, -1)
+	#if clickedCell != null:
+		#$Highlight.set_cell(clickedCell, -1)
 	$Highlight.set_cell(pos_clicked, 0, Vector2i(0,0), 1)
-	clickedCell = pos_clicked
+	#clickedCell = pos_clicked
 	
 func doPathHighlight(unit:Unit):
 	for cell in unit.movePath:
@@ -58,7 +67,6 @@ func doPathHighlight(unit:Unit):
 func doHoverPathHighlight():
 	if (Global.mapData.has(hoveredCell) and (hoverPath.size() == 0 or (hoverPath.size() > 0 and hoverPath[hoverPath.size() - 1] != hoveredCell))):
 		hoverPath = Global.hgh.getPath(selectedUnit.position, hoveredCell, true)
-	
 	for cell in hoverPath:
 		$Highlight.set_cell(cell, 1, Vector2i(0,0), 0)
 		
@@ -69,6 +77,27 @@ func highlightMoveRange():
 			$Highlight.set_cell(cell, 0, Vector2i(0,0), 2)
 		else:
 			$Highlight.set_cell(cell, 0, Vector2i(0,0), 1)
+			
+func highlightReinforcementPlacementRange(faction:Faction):
+	for cell in faction.importantTiles:
+		if Global.mapData[cell].unit == null:
+			$Highlight.set_cell(cell, 0, Vector2i(0,0), 2)
+		for neighbor in Global.hgh.getNeighbors(cell):
+			if Global.mapData[neighbor].unit == null and Global.mapData[neighbor].faction == Global.currentPlayer:
+				$Highlight.set_cell(neighbor, 0, Vector2i(0,0), 2)
+				
+				
+func highlightUnitMultiSelect():
+	for position in selectedUnitPositions:
+		doClickedHighlight(selectedUnitPositions[position].position)
+
+func determineUnitMultiSelect():
+	for unitPosition in Global.factions[Global.currentPlayer].unitPositions:
+		var unitGlobalPosition = $Terrain.map_to_local(unitPosition)
+		if $SelectBox.get_global_rect().has_point(unitGlobalPosition):
+			selectedUnitPositions[unitPosition] = Global.mapData[unitPosition].unit
+		else:
+			selectedUnitPositions.erase(unitPosition)
 
 func selectUnit(pos_clicked):
 	if (Global.mapData.has(pos_clicked) and Global.mapData[pos_clicked].unit != null):
@@ -76,7 +105,6 @@ func selectUnit(pos_clicked):
 		if (unit.faction == Global.currentPlayer and unit.movePoints > 0):
 			selectedUnit = unit
 			selectedUnitRange = getMoveRange(pos_clicked, selectedUnit.movePoints)
-		
 		
 func clickMove(pos_clicked):
 	var path = Global.hgh.getPath(selectedUnit.position, pos_clicked, true)
@@ -144,8 +172,8 @@ func takeEnemyTerritory(unitCell:Vector2i, unit:Unit) -> void:
 		if (cell == unitCell or Global.mapData[cell].unit == null):
 			var mapCell = Global.mapData[cell]
 			if mapCell.important:
-				Global.factions[mapCell.faction].numImportantTiles -= 1
-				Global.factions[unit.faction].numImportantTiles += 1
+				Global.factions[mapCell.faction].importantTiles.erase(mapCell)
+				Global.factions[unit.faction].importantTiles[mapCell] = true
 				update_top_panel.emit()
 			mapCell.faction = unit.faction
 			$FactionControl.set_cell(cell, 1, Vector2i(0,0), unit.faction)
@@ -184,9 +212,9 @@ func getMoveRange(start:Vector2i, range:int) -> Dictionary:
 func initUnits():
 	var unitPositions = $CombatUnitInit.get_used_cells()
 	for pos in unitPositions:
-		var unitTypeName = $CombatUnitInit.get_cell_tile_data(pos).get_custom_data("type")
-		createNewUnit(pos, Global.unitTypes[unitTypeName])
-		
+		if Global.mapData.has(pos):
+			var unitTypeName = $CombatUnitInit.get_cell_tile_data(pos).get_custom_data("type")
+			createNewUnit(pos, Global.unitTypes[unitTypeName])
 	$CombatUnitInit.clear()
 	
 func createNewUnit(pos:Vector2i, type:UnitType):
@@ -235,7 +263,7 @@ func initFactionControl():
 			cell.modulate = Global.factions[faction].color
 			Global.mapData[pos].faction = faction
 			if Global.mapData[pos].important:
-				Global.factions[faction].numImportantTiles += 1
+				Global.factions[faction].importantTiles[pos] = true
 			
 func getFactionAtPos(pos):
 	var tileData = $FactionControl.get_cell_tile_data(pos)
@@ -341,34 +369,53 @@ func nextTurn():
 		set_reinforcement_count_ui.emit(reinforcementCount)
 	next_turn.emit()
 	
+#This calculation is meant to provide a slowly rising curve for reinforcement counts based on the number
+#of important tiles owned by the faction. This way power doesn't linearly increase with size.
 func getReinforcementCount():
 	var faction:Faction = Global.factions[Global.currentPlayer]
 	var e:float = 2.718281828
-	return (Global.numImportantTiles / 10) * (log(faction.numImportantTiles + 1) / log(e)) + 3
+	return (Global.numImportantTiles / 10) * (log(faction.importantTiles.size() + 1) / log(e)) + 3
+
+func cellAroundImportantTile(cell:Vector2i):
+	if Global.mapData[cell].important:
+		return true
+	
+	for neighbor in Global.hgh.getNeighbors(cell):
+		if Global.mapData[neighbor].important:
+			return true
+	return false
+
+func activateSelectBox():
+	$SelectBox.visible = true
+	clearHighlights()
 
 func _input(event):
 	if event is InputEventMouseMotion:
 		var global_pos = get_global_mouse_position()
+		hoveredWorldPos = global_pos
+		if hoveredWorldPos.distance_to(clickedWorldPos) > 100 and Input.is_action_pressed("left_click"):
+			activateSelectBox()
 		var pos_hovered = $Terrain.local_to_map(global_pos)
-		if inputMode == PLAY_MODE:
-			if hoveredCell != pos_hovered:
-				if (Global.mapData.has(pos_hovered)):
-					hover_data.emit(Global.mapData[pos_hovered])
-					if (Global.mapData[pos_hovered].unit != null and getUnitVisible(pos_hovered)):
-						unit_info_data.emit(Global.mapData[pos_hovered].unit)
-					else:
-						unit_info_data.emit(null)
-					if (selectedUnit != null and cellContainsEnemyUnit(pos_hovered) and getUnitVisible(pos_hovered)):
-						var combatData = CombatHelper.getCombatData(Global.mapData[selectedUnit.position], Global.mapData[pos_hovered])
-						combat_panel_data.emit(combatData)
-					else:
-						combat_panel_data.emit(null)
+		if hoveredCell != pos_hovered:
+			if (Global.mapData.has(pos_hovered)):
+				hover_data.emit(Global.mapData[pos_hovered])
+				if (Global.mapData[pos_hovered].unit != null and getUnitVisible(pos_hovered)):
+					unit_info_data.emit(Global.mapData[pos_hovered].unit)
 				else:
-					hover_data.emit(Global.getEmptyCell(pos_hovered))
+					unit_info_data.emit(null)
+				if (selectedUnit != null and cellContainsEnemyUnit(pos_hovered) and getUnitVisible(pos_hovered)):
+					var combatData = CombatHelper.getCombatData(Global.mapData[selectedUnit.position], Global.mapData[pos_hovered])
+					combat_panel_data.emit(combatData)
+				else:
 					combat_panel_data.emit(null)
-				hoveredCell = pos_hovered
-		elif inputMode == REINFORCEMENT_MODE:
+			else:
+				hover_data.emit(Global.getEmptyCell(pos_hovered))
+				combat_panel_data.emit(null)
 			hoveredCell = pos_hovered
+		if $SelectBox.visible:
+			$SelectBox.size = hoveredWorldPos - clickedWorldPos
+			determineUnitMultiSelect()
+			
 
 func _on_button_pressed() -> void:
 	$FactionControl.visible = !$FactionControl.visible
@@ -376,6 +423,8 @@ func _on_button_pressed() -> void:
 func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.is_pressed():
+			clickedWorldPos = get_global_mouse_position()
+			$SelectBox.position = clickedWorldPos
 			$Highlight.clear()
 			hoverPath = []
 			var global_clicked = get_global_mouse_position()
@@ -389,12 +438,14 @@ func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx:
 					else:
 						selectUnit(pos_clicked)
 				elif inputMode == REINFORCEMENT_MODE:
-					if selectedUnitType != null and getFactionAtPos(pos_clicked) == Global.currentPlayer and not cellContainsFriendlyUnit(pos_clicked) and reinforcementCount > 0:
+					if selectedUnitType != null and getFactionAtPos(pos_clicked) == Global.currentPlayer and not cellContainsFriendlyUnit(pos_clicked) and reinforcementCount > 0 and cellAroundImportantTile(pos_clicked):
 						createNewUnit(pos_clicked, selectedUnitType)
 						reinforcementCount -= 1
 						set_reinforcement_count_ui.emit(reinforcementCount)
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.is_pressed():
 			clearHighlights()
+			$SelectBox.visible = false
+			selectedUnitPositions.clear()
 
 func _on_set_selected_unit(type:UnitType):
 	selectedUnitType = type
