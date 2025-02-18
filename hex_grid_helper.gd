@@ -39,6 +39,17 @@ func getNeighbors(cell: Vector2i) -> Array:
 			neighbors.push_back(oddq_offset_neighbor(cell, i))
 	return neighbors
 	
+func calculateMidpointOfCells(list:Dictionary):
+	var sumx = 0
+	var sumy = 0
+	for item in list:
+		sumx += item.x
+		sumy += item.y
+	var midx = sumx / list.size()
+	var midy = sumy / list.size()
+	
+	return Vector2i(roundi(midx), roundi(midy))
+	
 func getHighestMapValues():
 	var highestY = 0
 	var highestX = 0
@@ -69,7 +80,7 @@ func initMap():
 	
 func getPath(from:Vector2i, to:Vector2i, allowPartial:bool):
 	var endSpaceHasEnemy = false
-	if (mapData[to].unit != null and mapData[to].unit.faction != mapData[from].unit.faction):
+	if (mapData.has(to) and mapData[to].unit != null and mapData[to].unit.faction != mapData[from].unit.faction):
 		endSpaceHasEnemy = true
 		setCellOccupied(to, false)
 	var path = astar.get_point_path(getAStarCellId(from), getAStarCellId(to), allowPartial)

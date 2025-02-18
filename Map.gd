@@ -8,7 +8,7 @@ signal set_reinforcement_ui(active:bool)
 signal set_reinforcement_count_ui(num:int)
 signal next_turn()
 
-enum {PLAY_MODE, REINFORCEMENT_MODE}
+enum {PLAY_MODE, REINFORCEMENT_MODE, MULTI_MOVE}
 
 var inputMode = PLAY_MODE
 var hoveredCell = Vector2i()
@@ -17,6 +17,8 @@ var clickedCell = Vector2i()
 var clickedWorldPos = Vector2()
 var hoveredWorldPos = Vector2()
 var selectedUnitPositions:Dictionary
+var selectedUnitMidpoint:Vector2i
+var selectedUnitRelativePositions:Dictionary
 
 var hoverPath = []
 var selectedUnit:Unit
@@ -37,6 +39,7 @@ func _ready():
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	getHoverPath()
 	doHighlight()
 
 func doHighlight():
@@ -48,7 +51,7 @@ func doHighlight():
 	if (selectedUnit != null or (selectedUnit == null and cellContainsFriendlyUnit(hoveredCell))):
 		var unit = selectedUnit if selectedUnit != null else Global.mapData[hoveredCell].unit
 		doPathHighlight(unit)
-	if (selectedUnit != null):
+	if (selectedUnit != null or selectedUnitRelativePositions.size() > 0):
 		doHoverPathHighlight()
 	if inputMode == REINFORCEMENT_MODE:
 		highlightReinforcementPlacementRange(Global.factions[Global.currentPlayer])
@@ -65,8 +68,6 @@ func doPathHighlight(unit:Unit):
 		$Highlight.set_cell(cell, 0, Vector2i(0,0), 3)
 	
 func doHoverPathHighlight():
-	if (Global.mapData.has(hoveredCell) and (hoverPath.size() == 0 or (hoverPath.size() > 0 and hoverPath[hoverPath.size() - 1] != hoveredCell))):
-		hoverPath = Global.hgh.getPath(selectedUnit.position, hoveredCell, true)
 	for cell in hoverPath:
 		$Highlight.set_cell(cell, 1, Vector2i(0,0), 0)
 		
@@ -90,6 +91,22 @@ func highlightReinforcementPlacementRange(faction:Faction):
 func highlightUnitMultiSelect():
 	for position in selectedUnitPositions:
 		doClickedHighlight(selectedUnitPositions[position].position)
+		
+func getHoverPath():
+	if (inputMode == PLAY_MODE and selectedUnit != null and Global.mapData.has(hoveredCell) 
+		and (hoverPath.size() == 0 or (hoverPath.size() > 0 and hoverPath[hoverPath.size() - 1] != hoveredCell))):
+		hoverPath = Global.hgh.getPath(selectedUnit.position, hoveredCell, true)
+	elif (inputMode == MULTI_MOVE and Global.mapData.has(hoveredCell)):
+		hoverPath = getMultiHoverPath()
+
+func getMultiHoverPath():
+	var path = []
+	for item in selectedUnitRelativePositions:
+		var endpoint = hoveredCell + item
+		var beginPoint = selectedUnitMidpoint + item
+		path += Global.hgh.getPath(beginPoint, endpoint, true)
+	return path
+	
 
 func determineUnitMultiSelect():
 	for unitPosition in Global.factions[Global.currentPlayer].unitPositions:
@@ -106,14 +123,14 @@ func selectUnit(pos_clicked):
 			selectedUnit = unit
 			selectedUnitRange = getMoveRange(pos_clicked, selectedUnit.movePoints)
 		
-func clickMove(pos_clicked):
-	var path = Global.hgh.getPath(selectedUnit.position, pos_clicked, true)
+func clickMove(unitPosition:Vector2i, pos_clicked:Vector2i):
+	var path = Global.hgh.getPath(unitPosition, pos_clicked, true)
 	if (path.is_empty()):
 		return
-	var start = selectedUnit.position
+	var start = unitPosition
 	#path = path.slice(1) #remove the first cell because we don't want to use it in movement
-	selectedUnit.movePath = path
-	moveUnit(selectedUnit, start)
+	Global.mapData[unitPosition].unit.movePath = path
+	moveUnit(Global.mapData[unitPosition].unit, start)
 	
 func moveUnit(unit:Unit, start:Vector2i):
 	var mapUnitPath = []
@@ -173,7 +190,7 @@ func takeEnemyTerritory(unitCell:Vector2i, unit:Unit) -> void:
 			var mapCell = Global.mapData[cell]
 			if mapCell.important:
 				Global.factions[mapCell.faction].importantTiles.erase(mapCell)
-				Global.factions[unit.faction].importantTiles[mapCell] = true
+				Global.factions[unit.faction].importantTiles[mapCell.pos] = true
 				update_top_panel.emit()
 			mapCell.faction = unit.faction
 			$FactionControl.set_cell(cell, 1, Vector2i(0,0), unit.faction)
@@ -388,6 +405,32 @@ func cellAroundImportantTile(cell:Vector2i):
 func activateSelectBox():
 	$SelectBox.visible = true
 	clearHighlights()
+	
+func enableSelectedUnitMovement():
+	$SelectBox.visible = false
+	if selectedUnitPositions.size() > 0:
+		selectedUnitMidpoint = Global.hgh.calculateMidpointOfCells(selectedUnitPositions)
+		selectedUnitRelativePositions = calculateRelativeHexPositions(selectedUnitMidpoint, selectedUnitPositions)
+		inputMode = MULTI_MOVE
+	
+func calculateRelativeHexPositions(midpoint:Vector2i, list:Dictionary):
+	var relativeList:Dictionary
+	for item in list:
+		var relativePosition = item - midpoint
+		relativeList[relativePosition] = true
+	return relativeList
+
+func performMultiMove(pos_clicked:Vector2i):
+	for item in selectedUnitRelativePositions:
+		var from = item + selectedUnitMidpoint
+		var to = item + pos_clicked
+		clickMove(from, to)
+	exitMultiMoveMode()
+	
+func exitMultiMoveMode():
+	inputMode = PLAY_MODE
+	selectedUnitRelativePositions.clear()
+	selectedUnitPositions.clear()
 
 func _input(event):
 	if event is InputEventMouseMotion:
@@ -415,6 +458,9 @@ func _input(event):
 		if $SelectBox.visible:
 			$SelectBox.size = hoveredWorldPos - clickedWorldPos
 			determineUnitMultiSelect()
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.is_released() and $SelectBox.visible:
+			enableSelectedUnitMovement()
 			
 
 func _on_button_pressed() -> void:
@@ -433,7 +479,7 @@ func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx:
 			if (Global.mapData.has(pos_clicked)):
 				if inputMode == PLAY_MODE:
 					if (selectedUnit != null and not cellContainsFriendlyUnit(pos_clicked)):
-						clickMove(pos_clicked)
+						clickMove(selectedUnit.position, pos_clicked)
 						clearHighlights()
 					else:
 						selectUnit(pos_clicked)
@@ -442,10 +488,13 @@ func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx:
 						createNewUnit(pos_clicked, selectedUnitType)
 						reinforcementCount -= 1
 						set_reinforcement_count_ui.emit(reinforcementCount)
+				elif inputMode == MULTI_MOVE:
+					performMultiMove(pos_clicked)
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.is_pressed():
 			clearHighlights()
 			$SelectBox.visible = false
-			selectedUnitPositions.clear()
+			if inputMode == MULTI_MOVE:
+				exitMultiMoveMode()
 
 func _on_set_selected_unit(type:UnitType):
 	selectedUnitType = type
