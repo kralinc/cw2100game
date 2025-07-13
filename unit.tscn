@@ -1,10 +1,10 @@
 [gd_scene load_steps=12 format=3 uid="uid://6m37eo4vu10a"]
 
-[ext_resource type="Script" path="res://unit.gd" id="1_gqqc4"]
+[ext_resource type="Script" uid="uid://1d8uthypsr1v" path="res://unit.gd" id="1_gqqc4"]
 [ext_resource type="Texture2D" uid="uid://bknh2u8xwctne" path="res://assets/hex_white.png" id="1_ryqge"]
 [ext_resource type="Texture2D" uid="uid://bn1y5f27it6u8" path="res://assets/soldier.png" id="2_n0b2i"]
 [ext_resource type="Texture2D" uid="uid://behd4c8r8c0gh" path="res://assets/usaflagtest.png" id="4_qsgrv"]
-[ext_resource type="Shader" path="res://circle.gdshader" id="5_hcs4m"]
+[ext_resource type="Shader" uid="uid://e1yi2mm4ro3g" path="res://circle.gdshader" id="5_hcs4m"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jofek"]
 
@@ -67,9 +67,9 @@ tracks/0/keys = {
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_lyu3l"]
 _data = {
-"RESET": SubResource("Animation_r8gjv"),
-"attack": SubResource("Animation_j0f4i"),
-"die": SubResource("Animation_6jqqb")
+&"RESET": SubResource("Animation_r8gjv"),
+&"attack": SubResource("Animation_j0f4i"),
+&"die": SubResource("Animation_6jqqb")
 }
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yfuvb"]

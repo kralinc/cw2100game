@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cn7c2g8h2c55v"]
 
-[ext_resource type="Script" path="res://ReinforcementButton.gd" id="1_uhxwf"]
+[ext_resource type="Script" uid="uid://c5v3i43fknvg8" path="res://ReinforcementButton.gd" id="1_uhxwf"]
 
 [node name="ReinforcementButton" type="Button"]
 anchors_preset = 15

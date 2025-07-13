@@ -2,17 +2,17 @@
 
 [ext_resource type="Texture2D" uid="uid://ciwbye1qop7nx" path="res://assets/hex_atlas.png" id="1_n0h2r"]
 [ext_resource type="Texture2D" uid="uid://dnvql35w81c5r" path="res://assets/hex_highlight.png" id="1_tmjrh"]
-[ext_resource type="Script" path="res://Map.gd" id="2_qdjwj"]
-[ext_resource type="Script" path="res://CameraController.gd" id="3_rsdaa"]
-[ext_resource type="Script" path="res://HUDController.gd" id="4_kr5ul"]
+[ext_resource type="Script" uid="uid://4ke1ixxydpm2" path="res://Map.gd" id="2_qdjwj"]
+[ext_resource type="Script" uid="uid://6jpahk8667fl" path="res://CameraController.gd" id="3_rsdaa"]
+[ext_resource type="Script" uid="uid://r66t3fdjskjs" path="res://HUDController.gd" id="4_kr5ul"]
 [ext_resource type="Texture2D" uid="uid://ca2eygog0jy3n" path="res://assets/otherflagtest.png" id="4_wtva4"]
 [ext_resource type="Texture2D" uid="uid://bknh2u8xwctne" path="res://assets/hex_white.png" id="5_k048e"]
 [ext_resource type="Texture2D" uid="uid://bn1y5f27it6u8" path="res://assets/soldier.png" id="7_602uu"]
-[ext_resource type="Shader" path="res://tile.gdshader" id="7_mgtbv"]
+[ext_resource type="Shader" uid="uid://yq43jb5b2hkm" path="res://tile.gdshader" id="7_mgtbv"]
 [ext_resource type="Texture2D" uid="uid://c5m1sy60jusm7" path="res://assets/grass2.png" id="8_bhfvc"]
 [ext_resource type="Texture2D" uid="uid://8j7pyfgrf322" path="res://assets/water_128px.png" id="9_2h1s5"]
 [ext_resource type="PackedScene" uid="uid://6m37eo4vu10a" path="res://unit.tscn" id="9_7ffpw"]
-[ext_resource type="Shader" path="res://hex_outline.gdshader" id="9_tmbs5"]
+[ext_resource type="Shader" uid="uid://cd8ue8fnd0w2f" path="res://hex_outline.gdshader" id="9_tmbs5"]
 [ext_resource type="Texture2D" uid="uid://54pivf6vx4mw" path="res://assets/tank.png" id="10_gobwl"]
 [ext_resource type="Texture2D" uid="uid://c17bukt8sdv44" path="res://assets/dot.png" id="11_g7vyr"]
 [ext_resource type="Texture2D" uid="uid://jxfqm5qawyd0" path="res://assets/artillery.png" id="11_mwpoe"]
@@ -171,9 +171,9 @@ sources/0 = SubResource("TileSetAtlasSource_xalul")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_36t0s"]
 shader = ExtResource("9_tmbs5")
+shader_parameter/hexagon_texture = ExtResource("1_tmjrh")
 shader_parameter/outline_color = Vector4(0, 0, 0, 1)
 shader_parameter/outline_thickness = 1.0
-shader_parameter/hexagon_texture = ExtResource("1_tmjrh")
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dibjm"]
 texture = ExtResource("1_tmjrh")
