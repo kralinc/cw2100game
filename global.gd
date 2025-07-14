@@ -2,59 +2,63 @@ extends Node
 
 signal take_enemy_territory(cell:Vector2i)
 
+var mapScene:PackedScene
 var mapUnitsIncId = 0
 var hgh:HGH
 var mapData:Dictionary
 var mapUnits:Dictionary
 var factions:Dictionary
+var factionsList:Array = [] # for turn-taking
 var terrain:Dictionary
 var unitTypes:Dictionary
 var currentPlayer:int = 1
+var currentPlayerIterator:int = 0
 var numImportantTiles:int = 0
 var specialNames:Dictionary
 
 var turn = 1
-var turnsUntilReinforcement = 11
-var reinforcementModeCounter = 1
+var intraTurnCounter = 0
+var turnsUntilReinforcement = 10
+var reinforcementModeCounter = 0
 var interactionState:String
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	setupMap()
 	setupFactions()
 	setupTerrain()
 	setupUnitTypes()
 	setupSpecialNames()
 
+func setupMap():
+	mapScene = load("res://maps/smalltest.tscn")
+
 func setupFactions():
-	var none = Faction.new()
-	none.fullName = "Neutral"
-	none.color = Color(0,0,0)
-	none.flag = load("res://icon.svg")
-	factions[0] = none
+	var neutral = Faction.new()
+	neutral.fullName = "Neutral"
+	neutral.color = Color(0,0,0)
+	neutral.flag = load("res://icon.svg")
+	factions[0] = neutral
+
+	var file = FileAccess.open("res://config/factions.json", FileAccess.READ)
+	var json_string = file.get_as_text()
+	file.close()
+
+	var json = JSON.new()
+	var parse_result = json.parse(json_string)
+	if (parse_result != OK):
+		print("Error parsing JSON: ", json.get_error_message())
+		return
+
+
+	for i in range(json.data.size()):
+		var faction_data = json.data[i]
+		var faction = Faction.new()
+		faction.fullName = faction_data.fullName
+		faction.color = Color(faction_data.color[0], faction_data.color[1], faction_data.color[2])
+		faction.flag = load("res://assets/" + faction_data.flag)
+		factions[i + 1] = faction  # Start IDs at 1 instead of 0 due to hardcoded neutral faction
 	
-	var usa = Faction.new()
-	usa.fullName = "United States of America"
-	usa.color = Color(0,0,1)
-	usa.flag = load("res://assets/usaflagtest.png")
-	factions[1] = usa
-	
-	var csa = Faction.new()
-	csa.fullName = "Kingdom of America"
-	csa.color = Color(0.4, 0.4, 0.4)
-	csa.flag = load("res://assets/koaflag.png")
-	factions[2] = csa
-	
-	var wf = Faction.new()
-	wf.fullName = "Western Forces"
-	wf.color = Color(0,1,0.5)
-	wf.flag = load("res://assets/wfflag.png")
-	factions[3] = wf
-	
-	var can = Faction.new()
-	can.fullName = "Canada"
-	can.color = Color(0.83,0.15,0.1)
-	can.flag = load("res://assets/canadaflag.png")
-	factions[4] = can
 
 func setupTerrain():
 	terrain["plains"] = TerrainData.new("plains", "Plains", 1)
@@ -104,3 +108,8 @@ func setupSpecialNames():
 	specialNames[Vector2i(66,6)] = "New York City"
 	specialNames[Vector2i(65,6)] = "Newark"
 	specialNames[Vector2i(44,9)] = "Chicago"
+
+func getNextFactionId():
+	currentPlayerIterator += 1
+	return factionsList[currentPlayerIterator % factionsList.size()]
+	

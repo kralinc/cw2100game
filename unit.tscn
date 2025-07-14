@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://6m37eo4vu10a"]
+[gd_scene load_steps=15 format=3 uid="uid://6m37eo4vu10a"]
 
 [ext_resource type="Script" uid="uid://1d8uthypsr1v" path="res://unit.gd" id="1_gqqc4"]
 [ext_resource type="Texture2D" uid="uid://bknh2u8xwctne" path="res://assets/hex_white.png" id="1_ryqge"]
@@ -33,6 +33,30 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 0,
 "values": [Vector2(0, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("HitNumber:position")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, -47)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("HitNumber:modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 0.14902, 0.121569, 1)]
 }
 
 [sub_resource type="Animation" id="Animation_j0f4i"]
@@ -75,6 +99,66 @@ _data = {
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yfuvb"]
 shader = ExtResource("5_hcs4m")
 
+[sub_resource type="Animation" id="Animation_of1k5"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("HitNumber:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, -50)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("HitNumber:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 0.14902, 0.121569, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_baxm0"]
+resource_name = "show_hit_number"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("HitNumber:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.966667),
+"transitions": PackedFloat32Array(1.86607, 1),
+"update": 0,
+"values": [Vector2(0, -60), Vector2(0, -90)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("HitNumber:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.966667),
+"transitions": PackedFloat32Array(1, 2.92817),
+"update": 0,
+"values": [Color(1, 0.14902, 0.121569, 1), Color(1, 0.14902, 0.121569, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_74e6i"]
+_data = {
+&"RESET": SubResource("Animation_of1k5"),
+&"show_hit_number": SubResource("Animation_baxm0")
+}
+
 [node name="Unit" type="Node2D"]
 script = ExtResource("1_gqqc4")
 
@@ -101,7 +185,7 @@ expand_mode = 3
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
-"": SubResource("AnimationLibrary_lyu3l")
+&"": SubResource("AnimationLibrary_lyu3l")
 }
 
 [node name="AttackTimer" type="Timer" parent="."]
@@ -116,6 +200,30 @@ offset_top = -48.0
 offset_right = -10.0
 offset_bottom = -28.0
 color = Color(0.0588235, 0.854902, 0.0941176, 1)
+
+[node name="MovementIndicatorBorder" type="ColorRect" parent="MovementIndicator"]
+z_index = -1
+material = SubResource("ShaderMaterial_yfuvb")
+offset_left = -1.0
+offset_top = -1.0
+offset_right = 21.0
+offset_bottom = 21.0
+color = Color(0, 0, 0, 1)
+
+[node name="HitNumber" type="Label" parent="."]
+modulate = Color(1, 0.14902, 0.121569, 0)
+texture_filter = 1
+offset_top = -47.0
+offset_right = 40.0
+offset_bottom = -13.0
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 24
+text = "-30"
+
+[node name="ParallelAnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_74e6i")
+}
 
 [connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_animation_player_animation_finished"]
 [connection signal="timeout" from="AttackTimer" to="." method="_on_attack_timer_timeout"]

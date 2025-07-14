@@ -36,6 +36,10 @@ func moveAlongPath():
 	if not movePath.is_empty():
 		targetPosition = movePath[0]
 
+func showHitNumber(number:int):
+	$HitNumber.text = "-" + str(number)
+	$ParallelAnimationPlayer.play("show_hit_number")
+
 func doAttackAnimation():
 	$AttackTimer.wait_time = randf_range(0.05, 0.1)
 	$AttackTimer.start()
@@ -49,6 +53,8 @@ func setMovementIndicatorVisible(val:bool):
 func setMovementIndicatorEmpty(val:bool):
 	if val:
 		$MovementIndicator.color = Color(1,0.3,0.3)
+	elif Global.mapData[mapPosition].unit.movePath.size() > 0:
+		$MovementIndicator.color = Color(0.8, 0.8, 0.3)
 	else:
 		$MovementIndicator.color = Color(0.3,1.0,0.3)
 

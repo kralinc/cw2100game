@@ -7,7 +7,44 @@ func _ready():
 	setPlayerInfo()
 	generateReinforcementButtons()
 
-func _on_map_hover_data(data:CellData) -> void:
+func setUnitInfo(unit:Unit) -> void:
+	if (unit == null):
+		$UnitInfo.visible = false
+	else:
+		$UnitInfo.visible = true
+		$UnitInfo/UnitTypeLabel.text = unit.type.name
+		setHealthBar($UnitInfo/HealthBar, unit.hp)
+		$UnitInfo/MovementLabel.text = "Movement: %s" % unit.movePoints
+
+func setPlayerInfo() -> void:
+	$TopPanel/NameLabel.text = Global.factions[Global.currentPlayer].fullName
+	$TopPanel/Flag.texture = Global.factions[Global.currentPlayer].flag
+	$TopPanel/TurnLabel.text = "Turn: %d" % (Global.turn)
+	$TopPanel/TurnsUntilReinforceLabel.text = "Turns until reinforcement: %d" % Global.turnsUntilReinforcement
+	updateTopPanel()
+
+func setHealthBar(bar:ProgressBar, value:float):
+	var healthPercentage = value / 100.0
+	bar.modulate = Color(1 - healthPercentage, healthPercentage, 0)
+	bar.value = value
+
+func generateReinforcementButtons():
+	var rootNode = get_node("/root/Root")
+	for unitType in Global.unitTypes:
+		var type = Global.unitTypes[unitType]
+		var button = reinforcementButtonScene.instantiate()
+		button.unitType = type
+		button.icon = type.sprite
+		button.set_selected_unit.connect(rootNode._on_set_selected_unit.bind())
+		$ReinforcementUI/ButtonAnchor.add_child(button)
+
+func updateTopPanel():
+	$TopPanelExtra/ImportantLabel.text = "Important Tiles: %d" % Global.factions[Global.currentPlayer].importantTiles.size()
+
+# =========================================================
+# Signals
+# =========================================================
+func _on_root_hover_data(data:CellData) -> void:
 	$TileInfo/PosLabel.text = str(data.pos) + str(Global.hgh.getAStarCellId(data.pos))
 	if (data.specialName != null or data.specialName != ""):
 		$TileInfo/TerrainLabel.text =  "%s (%s, %s)" % [data.specialName, data.terrain.in_game_name, data.feature.in_game_name]
@@ -22,36 +59,16 @@ func _on_map_hover_data(data:CellData) -> void:
 	$TileInfo/Flag.texture = null if faction == null else faction.flag
 	$TileInfo/MoveCostLabel.text = "Movement cost: %s" % data.movementCost
 
-	
-func _on_map_unit_info_data(data: Unit) -> void:
+func _on_root_unit_info_data(data: Unit) -> void:
 	setUnitInfo(data)
-		
-func setUnitInfo(unit:Unit) -> void:
-	if (unit == null):
-		$UnitInfo.visible = false
-	else:
-		$UnitInfo.visible = true
-		$UnitInfo/UnitTypeLabel.text = unit.type.name
-		setHealthBar($UnitInfo/HealthBar, unit.hp)
-		$UnitInfo/MovementLabel.text = "Movement: %s" % unit.movePoints
 
-func setPlayerInfo() -> void:
-	$TopPanel/NameLabel.text = Global.factions[Global.currentPlayer].fullName
-	$TopPanel/Flag.texture = Global.factions[Global.currentPlayer].flag
-	$TopPanel/TurnLabel.text = "Turn: %d" % (Global.turn / 4)
-	$TopPanel/TurnsUntilReinforceLabel.text = "Turns until reinforcement: %d" % Global.turnsUntilReinforcement
-	updateTopPanel()
-
-func _on_map_next_turn() -> void:
+func _on_root_next_turn() -> void:
 	setPlayerInfo()
 
-func _on_map_update_top_panel() -> void:
+func _on_root_update_top_panel() -> void:
 	updateTopPanel()
-	
-func updateTopPanel():
-	$TopPanelExtra/ImportantLabel.text = "Important Tiles: %d" % Global.factions[Global.currentPlayer].importantTiles.size()
 
-func _on_map_combat_panel_data(data: CombatData) -> void:
+func _on_root_combat_panel_data(data: CombatData) -> void:
 	if data == null:
 		$CombatPanel.visible = false
 	else:
@@ -80,26 +97,9 @@ func _on_map_combat_panel_data(data: CombatData) -> void:
 			$CombatPanel/AdvantageLabel.modulate = Color(1,0,0)
 		else:
 			$CombatPanel/AdvantageLabel.visible = false
-		
-func setHealthBar(bar:ProgressBar, value:float):
-	var healthPercentage = value / 100.0
-	bar.modulate = Color(1 - healthPercentage, healthPercentage, 0)
-	bar.value = value
 
-
-func _on_map_set_reinforcement_ui(active: bool) -> void:
+func _on_root_set_reinforcement_ui(active: bool) -> void:
 	$ReinforcementUI.visible = active
-		
-func generateReinforcementButtons():
-	var mapNode = get_node("/root/Root/Map")
-	for unitType in Global.unitTypes:
-		var type = Global.unitTypes[unitType]
-		var button = reinforcementButtonScene.instantiate()
-		button.unitType = type
-		button.icon = type.sprite
-		button.set_selected_unit.connect(mapNode._on_set_selected_unit.bind())
-		$ReinforcementUI/ButtonAnchor.add_child(button)
 
-
-func _on_map_set_reinforcement_count_ui(num: int) -> void:
+func _on_root_set_reinforcement_count_ui(num: int) -> void:
 	$ReinforcementUI/ReinforcementLabel.text = "REINFORCEMENTS: %d" % num

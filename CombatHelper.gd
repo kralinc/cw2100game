@@ -7,9 +7,9 @@ static func getCombatData(attackerCell:CellData, defenderCell:CellData) -> Comba
 	data.attackerCell = attackerCell
 	data.defenderCell = defenderCell
 	
-	data.attackerMinDamage = 5
+	data.attackerMinDamage = 10
 	data.attackerMaxDamage = 60
-	data.defenderMinDamage = 5
+	data.defenderMinDamage = 10
 	data.defenderMaxDamage = 60
 		
 	data.attackerMaxDamage *= (1 + (defenderCell.movementCost - 1 ) / 3) #Terrain advantage for defender
@@ -51,7 +51,10 @@ static func attack(attackerCell:CellData, defenderCell:CellData) -> CombatResult
 	result.defenderDamage = randf_range(combatData.defenderMinDamage, combatData.defenderMaxDamage)
 	attackerCell.unit.hp -= result.attackerDamage
 	defenderCell.unit.hp -= result.defenderDamage
-	
+
+	Global.mapUnits[attackerCell.unit.mapUnitId].showHitNumber(result.attackerDamage)
+	Global.mapUnits[defenderCell.unit.mapUnitId].showHitNumber(result.defenderDamage)
+
 	result.attackerDead = (attackerCell.unit.hp < 0)
 	result.defenderDead = (defenderCell.unit.hp < 0)
 	return result
