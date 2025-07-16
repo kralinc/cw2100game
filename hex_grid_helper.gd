@@ -83,18 +83,29 @@ func getPath(from:Vector2i, to:Vector2i, allowPartial:bool):
 	if (mapData.has(to) and mapData[to].unit != null and mapData[to].unit.faction != mapData[from].unit.faction):
 		endSpaceHasEnemy = true
 		setCellOccupied(to, false)
-	var path = astar.get_point_path(getAStarCellId(from), getAStarCellId(to), allowPartial)
+
+	var toId:int = getAStarCellId(to)
+	if (!mapData.has(to)):
+		toId = astar.get_closest_point(to, true)
+
+	var path = astar.get_point_path(getAStarCellId(from), toId, allowPartial)
 	var integerPath = []
 	for cell in path:
 		integerPath.push_back(Vector2i(int(cell.x), int(cell.y)))
 	if (endSpaceHasEnemy):
-		setCellOccupied(to, true)
+		setCellOccupied(getCellFromAStarId(toId), true)
 	return integerPath.slice(1) #remove the first tile as we don't want to use it in movement
 	
 func getAStarCellId(cell:Vector2i)->int:
 	var x_shifted = cell.x + 10000
 	var y_shifted = cell.y + 10000
 	return (x_shifted + y_shifted) * (x_shifted + y_shifted + 1) / 2 + y_shifted
+
+func getCellFromAStarId(id: int) -> Vector2i:
+	var x_shifted = (1/8) * (-8 * id - 9)
+	var y_shifted = (1/8) * (8 * id - 3)
+	return Vector2i(x_shifted - 10000, y_shifted - 10000)
+
 
 func setCellOccupied(cell:Vector2i, occupied:bool)->void:
 	var idx = getAStarCellId(cell)

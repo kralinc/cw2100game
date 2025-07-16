@@ -37,7 +37,9 @@ func _ready():
 	initUnits()
 	#nextTurnFogOfWar(Global.currentPlayer)
 	#nextTurnUnitSetup(Global.currentPlayer)
+	Global.currentPlayerIterator = Global.factionsList.size() - 1
 	nextTurn()
+	Global.intraTurnCounter = 0
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -129,11 +131,12 @@ func clickMove(unitPosition:Vector2i, pos_clicked:Vector2i):
 	var path = Global.hgh.getPath(unitPosition, pos_clicked, true)
 	if (path.is_empty()):
 		return
+	var endPoint = path[path.size() - 1] #Last cell might not be the clicked cell
 	var start = unitPosition
 	#path = path.slice(1) #remove the first cell because we don't want to use it in movement
 	Global.mapData[unitPosition].unit.movePath = path
 	moveUnit(Global.mapData[unitPosition].unit, start)
-	unit_info_data.emit(Global.mapData[pos_clicked].unit)
+	unit_info_data.emit(Global.mapData[endPoint].unit)
 
 func moveUnit(unit:Unit, start:Vector2i):
 	var mapUnitPath = []
@@ -366,6 +369,8 @@ func nextTurnUnitSetup(player:int):
 		
 
 func nextTurn():
+	if (inputMode == MULTI_MOVE):
+		exitMultiMoveMode()
 	if inputMode == PLAY_MODE:
 		var unitPositionsCopy = Global.factions[Global.currentPlayer].unitPositions.duplicate()
 		for cell in unitPositionsCopy:
@@ -374,14 +379,14 @@ func nextTurn():
 				moveUnit(unit, unit.position)
 	
 		Global.intraTurnCounter += 1
-		if (Global.intraTurnCounter == Global.factionsList.size()):
+		if (Global.intraTurnCounter >= Global.factionsList.size()):
 			Global.turnsUntilReinforcement -= 1
 			Global.turn += 1
 			Global.intraTurnCounter = 0
 	elif inputMode == REINFORCEMENT_MODE:
 		Global.reinforcementModeCounter += 1
 		
-		if Global.reinforcementModeCounter == Global.factionsList.size():
+		if Global.reinforcementModeCounter >= Global.factionsList.size():
 			inputMode = PLAY_MODE
 			set_reinforcement_ui.emit(false)
 			Global.reinforcementModeCounter = 0
