@@ -416,7 +416,7 @@ offset_top = 32.0
 offset_right = 71.0
 offset_bottom = 55.0
 grow_horizontal = 2
-text = "Projected Damage"
+text = "Projected Remaining HP"
 
 [node name="MapContainer" type="Node2D" parent="."]
 

@@ -7,25 +7,27 @@ static func getCombatData(attackerCell:CellData, defenderCell:CellData) -> Comba
 	data.attackerCell = attackerCell
 	data.defenderCell = defenderCell
 	
-	data.attackerMinDamage = 10
-	data.attackerMaxDamage = 60
-	data.defenderMinDamage = 10
-	data.defenderMaxDamage = 60
-		
-	data.attackerMaxDamage *= (1 + (defenderCell.movementCost - 1 ) / 3) #Terrain advantage for defender
+	data.attackerMinDamage = 40
+	data.attackerMaxDamage = 50
+	data.defenderMinDamage = 40
+	data.defenderMaxDamage = 50
+
+	data.attackerMaxDamage += ((defenderCell.movementCost - 1) * 7) #Terrain advantage for defender
 
 	var numAdjacentAttacker = getNumAdjacentFriendlyUnits(attackerCell.unit)
 	var numAdjacentDefender = getNumAdjacentFriendlyUnits(defenderCell.unit)
 	
-	data.attackerMaxDamage += numAdjacentDefender * 7
-	data.defenderMaxDamage += numAdjacentAttacker * 7
-	
+	data.attackerMaxDamage *= 1 + (numAdjacentDefender * 0.1)
+	data.defenderMaxDamage *= 1 + (numAdjacentAttacker * 0.1)
+
 	if attackerCell.unit.hasAdvantageAgainst(defenderCell.unit):
-		data.defenderMinDamage *= 1.2
-		data.defenderMaxDamage *= 1.2
+		data.defenderMinDamage *= 1.3
+		data.defenderMaxDamage *= 1.3
+		data.attackerMinDamage *= 0.6
 	elif defenderCell.unit.hasAdvantageAgainst(attackerCell.unit):
-		data.attackerMinDamage *= 1.2
-		data.attackerMaxDamage *= 1.2
+		data.attackerMinDamage *= 1.3
+		data.attackerMaxDamage *= 1.3
+		data.defenderMinDamage *= 0.6
 
 	return data
 

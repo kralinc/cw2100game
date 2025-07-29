@@ -413,7 +413,7 @@ func nextTurn():
 func getReinforcementCount():
 	var faction:Faction = Global.factions[Global.currentPlayer]
 	var e:float = 2.718281828
-	return (Global.numImportantTiles / 10) * (log(faction.importantTiles.size() + 1) / log(e)) + 3
+	return (faction.importantTiles.size() + 3)/2
 
 func cellAroundImportantTile(cell:Vector2i):
 	if Global.mapData[cell].important:
