@@ -9,3 +9,4 @@ var unitPositions:Dictionary
 var importantTiles:Dictionary
 var isAi:bool = false
 var isDead:bool = false
+var tilesLostLastTurn:Dictionary

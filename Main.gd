@@ -32,6 +32,7 @@ var reinforcementCount:int = 0
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	initMapData()
+	initHighlightCells()
 	initFactionControl()
 	initPathfinding()
 	initUnits()
@@ -48,6 +49,7 @@ func _process(delta):
 
 func doHighlight():
 	$MapContainer/Map/Highlight.clear()
+	highlightLostTiles()
 	if (clickedCell != null):
 		doClickedHighlight(clickedCell)
 	highlightUnitMultiSelect()
@@ -60,7 +62,12 @@ func doHighlight():
 	if inputMode == REINFORCEMENT_MODE:
 		highlightReinforcementPlacementRange(Global.factions[Global.currentPlayer])
 	$MapContainer/Map/Highlight.set_cell(hoveredCell, 0, Vector2(0,0))
-		
+
+func highlightLostTiles():
+	for tile in Global.factions[Global.currentPlayer].tilesLostLastTurn:
+		$MapContainer/Map/Highlight.set_cell(tile, 0, Vector2i(0,0), 4)
+
+
 func doClickedHighlight(pos_clicked):
 	#if clickedCell != null:
 		#$MapContainer/Map/Highlight.set_cell(clickedCell, -1)
@@ -199,6 +206,7 @@ func takeEnemyTerritory(unitCell:Vector2i, unit:Unit) -> void:
 				Global.factions[mapCell.faction].importantTiles.erase(mapCell.pos)
 				Global.factions[unit.faction].importantTiles[mapCell.pos] = true
 				update_top_panel.emit()
+			Global.factions[mapCell.faction].tilesLostLastTurn[mapCell.pos] = true
 			mapCell.faction = unit.faction
 			$MapContainer/Map/FactionControl.set_cell(cell, 1, Vector2i(0,0), unit.faction)
 			$MapContainer/Map/FOW.set_cell(cell, -1)
@@ -261,6 +269,17 @@ func createNewUnit(pos:Vector2i, type:UnitType):
 	Global.hgh.setCellOccupied(pos, true)
 	add_child(mapUnit)
 	
+func initHighlightCells():
+	#Add an alternative tile to the highlight layer for each item in the cellHighlightColors array
+	for i in range(Global.cellHighlightColors.size()):
+		var color = Global.cellHighlightColors[i]
+		var atlasSource = $MapContainer/Map/Highlight.tile_set.get_source(0)
+		var alternativeId = atlasSource.create_alternative_tile(Vector2i.ZERO, i + 1)
+		atlasSource.get_tile_data(Vector2i.ZERO, alternativeId).modulate = color
+		#Test that the new tile is present
+		if atlasSource.get_tile_data(Vector2i.ZERO, alternativeId - 2) == null:
+			print("Failed to create alternative tile for color: ", color)
+
 func initMapData():
 	var scene = Global.mapScene.instantiate()
 	$MapContainer.add_child(scene)
@@ -393,6 +412,7 @@ func nextTurn():
 			Global.turnsUntilReinforcement = 10
 			selectedUnitType = null
 
+	Global.factions[Global.currentPlayer].tilesLostLastTurn.clear()
 	# Remove faction if it has no important tiles left
 	if Global.factions[Global.currentPlayer].importantTiles.size() == 0:
 		removeFaction()

@@ -15,6 +15,7 @@ var currentPlayer:int = 1
 var currentPlayerIterator:int = 0
 var numImportantTiles:int = 0
 var specialNames:Dictionary
+var cellHighlightColors:Array = [Color(1, 0.8, 0, 1), Color(1, 0, 0, 1), Color(0, 0.5, 1, 1), Color(1, 0, 0, 0.5)]
 
 var turn = 1
 var intraTurnCounter = 0

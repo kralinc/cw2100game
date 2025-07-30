@@ -151,12 +151,6 @@ texture_region_size = Vector2i(74, 64)
 0:0/next_alternative_id = 4
 0:0/0 = 0
 0:0/0/material = SubResource("ShaderMaterial_36t0s")
-0:0/1 = 1
-0:0/1/modulate = Color(1, 0.784314, 0, 1)
-0:0/2 = 2
-0:0/2/modulate = Color(1, 0, 0, 1)
-0:0/3 = 3
-0:0/3/modulate = Color(0, 0.991006, 0.992567, 1)
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5tnxs"]
 texture = ExtResource("12_ppe00")
