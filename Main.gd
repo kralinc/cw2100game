@@ -392,6 +392,10 @@ func nextTurn():
 			Global.reinforcementModeCounter = 0
 			Global.turnsUntilReinforcement = 10
 			selectedUnitType = null
+
+	# Remove faction if it has no important tiles left
+	if Global.factions[Global.currentPlayer].importantTiles.size() == 0:
+		removeFaction()
 	Global.currentPlayer = Global.getNextFactionId()
 	
 	if inputMode == REINFORCEMENT_MODE:
@@ -407,6 +411,23 @@ func nextTurn():
 		reinforcementCount = getReinforcementCount()
 		set_reinforcement_count_ui.emit(reinforcementCount)
 	next_turn.emit()
+
+func removeFaction():
+	#Clear faction units
+	for unitPos in Global.factions[Global.currentPlayer].unitPositions.keys():
+		var unit = Global.mapData[unitPos].unit
+		if unit != null:
+			Global.factions[Global.currentPlayer].unitPositions.erase(unitPos)
+			Global.mapUnits[unit.mapUnitId].destroySelf()
+			Global.mapUnits.erase(unit.mapUnitId)
+			Global.mapData[unitPos].unit = null
+	#Clear faction tile ownership
+	for tile in Global.mapData.keys():
+		if Global.mapData[tile].faction == Global.currentPlayer:
+			Global.mapData[tile].faction = 0
+			$MapContainer/Map/FactionControl.set_cell(tile, -1)
+	# Remove faction from the list
+	Global.factionsList.erase(Global.currentPlayer)
 	
 #This calculation is meant to provide a slowly rising curve for reinforcement counts based on the number
 #of important tiles owned by the faction. This way power doesn't linearly increase with size.
