@@ -31,6 +31,7 @@ func moveAlongPath():
 		var tween = create_tween()
 		tween.tween_property(self, "position", targetPosition, 0.1)
 	else:
+		position = targetPosition
 		movePath.remove_at(0)
 
 	if not movePath.is_empty():

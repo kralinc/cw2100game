@@ -1,20 +1,24 @@
 [
     {
+        "id": 1,
         "fullName": "United States of America",
         "color": [0, 0, 1],
         "flag": "usaflagtest.png"
     },
     {
+        "id": 2,
         "fullName": "Kingdom of America",
         "color": [0.4, 0.4, 0.4],
         "flag": "koaflag.png"
     },
     {
+        "id": 3,
         "fullName": "Western Forces",
         "color": [0, 1, 0.5],
         "flag": "wfflag.png"
     },
     {
+        "id": 4,
         "fullName": "Canada",
         "color": [0.83, 0.15, 0.1],
         "flag": "canadaflag.png"

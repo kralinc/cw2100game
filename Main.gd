@@ -93,10 +93,10 @@ func highlightMoveRange():
 func highlightReinforcementPlacementRange(faction:Faction):
 	for cell in faction.importantTiles:
 		if Global.mapData[cell].unit == null:
-			$MapContainer/Map/Highlight.set_cell(cell, 0, Vector2i(0,0), 2)
+			$MapContainer/Map/Highlight.set_cell(cell, 0, Vector2i(0,0), 3)
 		for neighbor in Global.hgh.getNeighbors(cell):
 			if Global.mapData[neighbor].unit == null and Global.mapData[neighbor].faction == Global.currentPlayer:
-				$MapContainer/Map/Highlight.set_cell(neighbor, 0, Vector2i(0,0), 2)
+				$MapContainer/Map/Highlight.set_cell(neighbor, 0, Vector2i(0,0), 3)
 				
 				
 func highlightUnitMultiSelect():
@@ -206,14 +206,17 @@ func takeEnemyTerritory(unitCell:Vector2i, unit:Unit) -> void:
 				Global.factions[mapCell.faction].importantTiles.erase(mapCell.pos)
 				Global.factions[unit.faction].importantTiles[mapCell.pos] = true
 				update_top_panel.emit()
-			Global.factions[mapCell.faction].tilesLostLastTurn[mapCell.pos] = true
+			if (mapCell.faction != unit.faction):
+				Global.factions[mapCell.faction].tilesLostLastTurn[mapCell.pos] = true
 			mapCell.faction = unit.faction
 			$MapContainer/Map/FactionControl.set_cell(cell, 1, Vector2i(0,0), unit.faction)
 			$MapContainer/Map/FOW.set_cell(cell, -1)
 			
 func updateFowAroundCell(cell:Vector2i):
 	for outerCell in Global.hgh.getNeighbors(cell):
-		$MapContainer/Map/FOW.set_cell(outerCell, -1)
+		if (Global.humanPlayers.has(Global.currentPlayer)):
+			$MapContainer/Map/FOW.set_cell(outerCell, -1)
+		Global.factions[Global.currentPlayer].visibleTiles[outerCell] = true
 		if Global.mapData[outerCell].unit != null:
 			setUnitVisible(outerCell, true)
 
@@ -348,14 +351,19 @@ func initPathfinding():
 	Global.hgh.initMap()
 	
 func nextTurnFogOfWar(player:int):
+	var playerIsHuman:bool = Global.humanPlayers.has(player)
 	for tile in Global.mapData:
 		var cell = Global.mapData[tile]
 		if cell.faction != player:
-			$MapContainer/Map/FOW.set_cell(cell.pos, 0, Vector2i(0,0))
+			Global.factions[player].visibleTiles.erase(cell.pos)
+			if playerIsHuman:
+				$MapContainer/Map/FOW.set_cell(cell.pos, 0, Vector2i(0,0))
 			if cell.unit != null:
 				setUnitVisible(cell.pos, false)
 		else:
-			$MapContainer/Map/FOW.set_cell(cell.pos, -1)
+			Global.factions[player].visibleTiles[cell.pos] = true
+			if playerIsHuman:
+				$MapContainer/Map/FOW.set_cell(cell.pos, -1)
 			if cell.unit != null:
 				setUnitVisible(cell.pos, true)
 				
@@ -363,13 +371,18 @@ func nextTurnFogOfWar(player:int):
 		var unit = Global.mapData[unitPos].unit
 		for innerCell in Global.hgh.getNeighbors(unit.position):
 			for outerCell in Global.hgh.getNeighbors(innerCell):
-				$MapContainer/Map/FOW.set_cell(outerCell, -1)
+				Global.factions[player].visibleTiles[outerCell] = true
+				if playerIsHuman:
+					$MapContainer/Map/FOW.set_cell(outerCell, -1)
 				if Global.mapData[outerCell].unit != null:
 					setUnitVisible(outerCell, true)
 					
 func setUnitVisible(cell:Vector2i, visible:bool):
 	var cellData = Global.mapData[cell]
-	Global.mapUnits[cellData.unit.mapUnitId].visible = visible
+	if Global.humanPlayers.has(Global.currentPlayer):
+		if (Global.mapUnits[cellData.unit.mapUnitId].visible != visible):
+			Global.mapUnits[cellData.unit.mapUnitId].visible = visible
+			Global.mapUnits[cellData.unit.mapUnitId].position = cellData.worldPos
 	Global.hgh.setCellOccupied(cell, visible)
 	
 func getUnitVisible(cell:Vector2i):
@@ -381,11 +394,27 @@ func nextTurnUnitSetup(player:int):
 		var unit = Global.mapData[cell].unit
 		if unit.faction == player:
 			unit.movePoints = unit.type.movementPoints
+			unit.hp = min(unit.hp + 10, unit.type.hp)
 			Global.mapUnits[id].setMovementIndicatorVisible(true)
 			Global.mapUnits[id].setMovementIndicatorEmpty(false)
 		else:
 			Global.mapUnits[id].setMovementIndicatorVisible(false)
-		
+
+func doAITurn():
+	if (inputMode == REINFORCEMENT_MODE):
+		var unitsToCreate:Array = AIManager.placeReinforcements(Global.factions[Global.currentPlayer])
+		for unitDefinition in unitsToCreate:
+			createNewUnit(unitDefinition.position, unitDefinition.type)
+	else:
+		var tasks:Array = AIManager.gatherTasks(Global.factions[Global.currentPlayer])
+		var assignments:Array = AIManager.gatherAssignments(tasks, Global.factions[Global.currentPlayer])
+		var assignedTasks:Array = AIManager.assignTasks(assignments)
+		for assignedTask in assignedTasks:
+			var taskPosition = assignedTask.task.target
+			var unitPosition = assignedTask.unit
+			clickMove(unitPosition, taskPosition)
+
+	nextTurn()
 
 func nextTurn():
 	if (inputMode == MULTI_MOVE):
@@ -413,13 +442,14 @@ func nextTurn():
 			selectedUnitType = null
 
 	Global.factions[Global.currentPlayer].tilesLostLastTurn.clear()
+	Global.factions[Global.currentPlayer].visibleTiles.clear()
 	# Remove faction if it has no important tiles left
 	if Global.factions[Global.currentPlayer].importantTiles.size() == 0:
 		removeFaction()
 	Global.currentPlayer = Global.getNextFactionId()
 	
 	if inputMode == REINFORCEMENT_MODE:
-		reinforcementCount = getReinforcementCount()
+		reinforcementCount = Global.getReinforcementCount()
 		set_reinforcement_count_ui.emit(reinforcementCount)
 	nextTurnFogOfWar(Global.currentPlayer)
 	nextTurnUnitSetup(Global.currentPlayer)
@@ -428,9 +458,24 @@ func nextTurn():
 	if inputMode == PLAY_MODE and Global.turnsUntilReinforcement == 0:
 		inputMode = REINFORCEMENT_MODE
 		set_reinforcement_ui.emit(true)
-		reinforcementCount = getReinforcementCount()
+		reinforcementCount = Global.getReinforcementCount()
 		set_reinforcement_count_ui.emit(reinforcementCount)
 	next_turn.emit()
+
+	if checkAllHumanPlayersDead():
+		print("All human players are dead. Game over.")
+		return
+
+	elif (!Global.humanPlayers.has(Global.currentPlayer)):
+		doAITurn()
+
+func checkAllHumanPlayersDead():
+	var allDead = true
+	for faction in Global.factionsList:
+		if Global.humanPlayers.has(faction):
+			allDead = false
+			break
+	return allDead
 
 func removeFaction():
 	#Clear faction units
@@ -448,22 +493,6 @@ func removeFaction():
 			$MapContainer/Map/FactionControl.set_cell(tile, -1)
 	# Remove faction from the list
 	Global.factionsList.erase(Global.currentPlayer)
-	
-#This calculation is meant to provide a slowly rising curve for reinforcement counts based on the number
-#of important tiles owned by the faction. This way power doesn't linearly increase with size.
-func getReinforcementCount():
-	var faction:Faction = Global.factions[Global.currentPlayer]
-	var e:float = 2.718281828
-	return (faction.importantTiles.size() + 3)/2
-
-func cellAroundImportantTile(cell:Vector2i):
-	if Global.mapData[cell].important:
-		return true
-	
-	for neighbor in Global.hgh.getNeighbors(cell):
-		if Global.mapData[neighbor].important:
-			return true
-	return false
 
 func activateSelectBox():
 	$SelectBox.visible = true
@@ -547,7 +576,7 @@ func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx:
 					else:
 						selectUnit(pos_clicked)
 				elif inputMode == REINFORCEMENT_MODE:
-					if selectedUnitType != null and getFactionAtPos(pos_clicked) == Global.currentPlayer and not cellContainsFriendlyUnit(pos_clicked) and reinforcementCount > 0 and cellAroundImportantTile(pos_clicked):
+					if selectedUnitType != null and getFactionAtPos(pos_clicked) == Global.currentPlayer and not cellContainsFriendlyUnit(pos_clicked) and reinforcementCount > 0 and Global.cellAroundImportantTile(pos_clicked):
 						createNewUnit(pos_clicked, selectedUnitType)
 						reinforcementCount -= 1
 						set_reinforcement_count_ui.emit(reinforcementCount)

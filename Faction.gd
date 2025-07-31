@@ -2,6 +2,7 @@ extends Object
 
 class_name Faction
 
+var id:int
 var fullName:String
 var color:Color
 var flag:Texture2D
@@ -10,3 +11,4 @@ var importantTiles:Dictionary
 var isAi:bool = false
 var isDead:bool = false
 var tilesLostLastTurn:Dictionary
+var visibleTiles:Dictionary

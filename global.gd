@@ -11,6 +11,7 @@ var factions:Dictionary
 var factionsList:Array = [] # for turn-taking
 var terrain:Dictionary
 var unitTypes:Dictionary
+var humanPlayers:Dictionary = {1: true}
 var currentPlayer:int = 1
 var currentPlayerIterator:int = 0
 var numImportantTiles:int = 0
@@ -32,7 +33,7 @@ func _ready() -> void:
 	setupSpecialNames()
 
 func setupMap():
-	mapScene = load("res://maps/smalltest.tscn")
+	mapScene = load("res://maps/largetestlessbs.tscn")
 
 func setupFactions():
 	var neutral = Faction.new()
@@ -51,10 +52,10 @@ func setupFactions():
 		print("Error parsing JSON: ", json.get_error_message())
 		return
 
-
 	for i in range(json.data.size()):
 		var faction_data = json.data[i]
 		var faction = Faction.new()
+		faction.id = faction_data.id
 		faction.fullName = faction_data.fullName
 		faction.color = Color(faction_data.color[0], faction_data.color[1], faction_data.color[2])
 		faction.flag = load("res://assets/" + faction_data.flag)
@@ -114,3 +115,15 @@ func getNextFactionId():
 	currentPlayerIterator += 1
 	return factionsList[currentPlayerIterator % factionsList.size()]
 	
+func cellAroundImportantTile(cell:Vector2i):
+	if mapData[cell].important:
+		return true
+	
+	for neighbor in hgh.getNeighbors(cell):
+		if mapData[neighbor].important:
+			return true
+	return false
+
+func getReinforcementCount():
+	var faction:Faction = factions[currentPlayer]
+	return (faction.importantTiles.size() + 3)/2
