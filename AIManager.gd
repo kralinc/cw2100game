@@ -19,11 +19,11 @@ static func gatherTasks(faction:Faction) -> Array:
 		var cell = Global.mapData[cellId]
 		if cell.important and cell.faction != faction.id:
 			tasks.append({"type": taskTypes.TAKE_IMPORTANT_TILE, "target": cellId})
-		elif cell.important and cell.faction == faction.id:
+		if cell.important and cell.faction == faction.id:
 			tasks.append({"type": taskTypes.RETREAT, "target": cellId})
-		elif cell.faction != faction.id and cell.unit != null and faction.visibleTiles.has(cellId):
+		if cell.faction != faction.id and cell.unit != null and faction.visibleTiles.has(cellId):
 			tasks.append({"type": taskTypes.ATTACK_ENEMY, "target": cellId})
-		elif faction.tilesLostLastTurn.has(cellId):
+		if faction.tilesLostLastTurn.has(cellId):
 			tasks.append({"type": taskTypes.DEFEND_TERRITORY, "target": cellId})
 
 	return tasks
@@ -51,10 +51,10 @@ static func assignTasks(assignments:Array) -> Array:
 	var assignedUnits:Dictionary = {}
 	var allocatedTasks:Dictionary = {}
 	for assignment in assignments:
-		if (assignedUnits.has(assignment.unit) or allocatedTasks.has(assignment.task.target)):
+		if (assignedUnits.has(assignment.unit) or (allocatedTasks.has("%s,%s,%s" % [assignment.task.type, assignment.task.target.x, assignment.task.target.y]))):
 			continue  # Skip if unit is already assigned
 		assignedUnits[assignment.unit] = true
-		allocatedTasks[assignment.task.target] = true
+		allocatedTasks["%s,%s,%s" % [assignment.task.type, assignment.task.target.x, assignment.task.target.y]] = true
 		assignedTasks.append({"task": assignment.task, "unit": assignment.unit})
 		print("Assigned task: ", assignment.task.type, " at position:", assignment.task.target, " to unit: ", assignment.unit, " with score: ", assignment.score)
 	return assignedTasks

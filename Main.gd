@@ -160,6 +160,7 @@ func moveUnit(unit:Unit, start:Vector2i):
 				dead = combatResult.attackerDead
 				canMove = combatResult.defenderDead
 				remainingMovement = 0
+				Global.processDeaths(combatResult)
 			else:
 				#this likely happens if you've autopathed multiple units and they overlap.
 				#recalculate the movePath to go around.
@@ -172,27 +173,19 @@ func moveUnit(unit:Unit, start:Vector2i):
 		if not dead and canMove:
 			mapUnitPath.push_back(Global.mapData[cell].worldPos)
 			remainingMovement -= Global.mapData[cell].movementCost
-			Global.mapData[unit.position].unit = null
-			Global.mapData[cell].unit = unit
-			unit.position = cell
-			Global.mapUnits[unit.mapUnitId].mapPosition = unit.position
+			Global.updateUnitPosition(unit, cell)
+			updateFowAroundCell(unit.position)
 			if (Global.mapData[cell].faction != unit.faction):
 				takeEnemyTerritory(cell, unit)
 			if (remainingMovement <= 0 or unit.movePath.is_empty()):
 				break
 		else:
 			break
-	Global.hgh.setCellOccupied(start, false)
-	Global.processDeaths(combatResult)
-	updateFowAroundCell(unit.position)
-	Global.factions[unit.faction].unitPositions.erase(start)
 	if not dead:
+		Global.mapUnits[unit.mapUnitId].startMove(mapUnitPath)
 		if (remainingMovement <= 0):
 			Global.mapUnits[unit.mapUnitId].setMovementIndicatorEmpty(true)
 		unit.movePoints = remainingMovement if remainingMovement >= 0 else 0
-		Global.factions[unit.faction].unitPositions[unit.position] = true
-		Global.hgh.setCellOccupied(unit.position, true)
-		Global.mapUnits[unit.mapUnitId].startMove(mapUnitPath)
 
 func takeEnemyTerritory(unitCell:Vector2i, unit:Unit) -> void:
 	var faction = Global.factions[unit.faction]
@@ -392,6 +385,9 @@ func nextTurnUnitSetup(player:int):
 	for id in Global.mapUnits:
 		var cell = Global.mapUnits[id].mapPosition
 		var unit = Global.mapData[cell].unit
+		if (not unit):
+			print("NULL UNIT: Cell: %s, Player: %s" % [cell, Global.currentPlayer])
+			return
 		if unit.faction == player:
 			unit.movePoints = unit.type.movementPoints
 			unit.hp = min(unit.hp + 10, unit.type.hp)

@@ -17,17 +17,17 @@ static func getCombatData(attackerCell:CellData, defenderCell:CellData) -> Comba
 	var numAdjacentAttacker = getNumAdjacentFriendlyUnits(attackerCell.unit)
 	var numAdjacentDefender = getNumAdjacentFriendlyUnits(defenderCell.unit)
 	
-	data.attackerMaxDamage *= 1 + (numAdjacentDefender * 0.1)
-	data.defenderMaxDamage *= 1 + (numAdjacentAttacker * 0.1)
+	data.attackerMaxDamage *= 1 + (numAdjacentDefender * 0.2)
+	data.defenderMaxDamage *= 1 + (numAdjacentAttacker * 0.2)
 
 	if attackerCell.unit.hasAdvantageAgainst(defenderCell.unit):
 		data.defenderMinDamage *= 1.3
 		data.defenderMaxDamage *= 1.3
-		data.attackerMinDamage *= 0.6
+		data.attackerMinDamage *= 0.5
 	elif defenderCell.unit.hasAdvantageAgainst(attackerCell.unit):
 		data.attackerMinDamage *= 1.3
 		data.attackerMaxDamage *= 1.3
-		data.defenderMinDamage *= 0.6
+		data.defenderMinDamage *= 0.5
 
 	return data
 

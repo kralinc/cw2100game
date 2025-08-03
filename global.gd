@@ -2,6 +2,9 @@ extends Node
 
 signal take_enemy_territory(cell:Vector2i)
 
+var MAP_NAME = "smallfourplayer"
+var humanPlayers:Dictionary = {2: true}
+
 var mapScene:PackedScene
 var mapUnitsIncId = 0
 var hgh:HGH
@@ -11,7 +14,6 @@ var factions:Dictionary
 var factionsList:Array = [] # for turn-taking
 var terrain:Dictionary
 var unitTypes:Dictionary
-var humanPlayers:Dictionary = {1: true}
 var currentPlayer:int = 1
 var currentPlayerIterator:int = 0
 var numImportantTiles:int = 0
@@ -33,7 +35,8 @@ func _ready() -> void:
 	setupSpecialNames()
 
 func setupMap():
-	mapScene = load("res://maps/largetestlessbs.tscn")
+	var mapNameAsset = "res://maps/%s/%s.tscn" % [MAP_NAME, MAP_NAME]
+	mapScene = load(mapNameAsset)
 
 func setupFactions():
 	var neutral = Faction.new()
@@ -92,24 +95,31 @@ func processDeaths(combatResult:CombatResult) -> void:
 		return
 		
 	if (combatResult.attackerDead):
-		factions[combatResult.attackerUnit.faction].unitPositions.erase(combatResult.attackerCell.pos)
-		mapUnits[combatResult.attackerUnit.mapUnitId].destroySelf()
-		mapUnits.erase(combatResult.attackerUnit.mapUnitId)
-		combatResult.attackerCell.unit = null
-		Global.hgh.setCellOccupied(combatResult.attackerCell.pos, false)
+		destroyUnit(combatResult.attackerCell.pos)
 		
 	if (combatResult.defenderDead):
-		factions[combatResult.defenderUnit.faction].unitPositions.erase(combatResult.defenderCell.pos)
-		mapUnits[combatResult.defenderUnit.mapUnitId].destroySelf()
-		mapUnits.erase(combatResult.defenderUnit.mapUnitId)
-		if (combatResult.attackerDead):
-			combatResult.defenderCell.unit = null
-			Global.hgh.setCellOccupied(combatResult.defenderCell.pos, false)
+		destroyUnit(combatResult.defenderCell.pos)
 
 func setupSpecialNames():
-	specialNames[Vector2i(66,6)] = "New York City"
-	specialNames[Vector2i(65,6)] = "Newark"
-	specialNames[Vector2i(44,9)] = "Chicago"
+	var file = FileAccess.open("res://maps/%s/specialnames.json" % [MAP_NAME], FileAccess.READ)
+	if not file:
+		print("Could not open special names file.")
+		return
+	var json_string = file.get_as_text()
+	file.close()
+
+	var json = JSON.new()
+	var parse_result = json.parse(json_string)
+	if (parse_result != OK):
+		print("Error parsing JSON: ", json.get_error_message())
+		return
+
+	for key in json.data.keys():
+		var splitCoords  = key.split(",")
+		var cell = Vector2i(splitCoords[0].to_int(), splitCoords[1].to_int())
+		var tileName = json.data[key]
+		if (tileName != ""):
+			specialNames[cell] = tileName
 
 func getNextFactionId():
 	currentPlayerIterator += 1
@@ -127,3 +137,27 @@ func cellAroundImportantTile(cell:Vector2i):
 func getReinforcementCount():
 	var faction:Faction = factions[currentPlayer]
 	return (faction.importantTiles.size() + 3)/2
+
+func destroyUnit(cell:Vector2i):
+	if mapData[cell].unit != null:
+		var unit = mapData[cell].unit
+		factions[unit.faction].unitPositions.erase(cell)
+		mapUnits[unit.mapUnitId].destroySelf()
+		mapUnits.erase(unit.mapUnitId)
+		hgh.setCellOccupied(cell, false)
+		mapData[cell].unit = null
+
+func updateUnitPosition(unit:Unit, newPos:Vector2i):
+	if unit.position != newPos:
+		hgh.setCellOccupied(unit.position, false)
+		mapData[unit.position].unit = null
+		factions[unit.faction].unitPositions.erase(unit.position)
+
+		hgh.setCellOccupied(newPos, true)
+		mapData[newPos].unit = unit
+		factions[unit.faction].unitPositions[newPos] = true
+		mapUnits[unit.mapUnitId].mapPosition = newPos
+
+		unit.position = newPos
+		
+		
