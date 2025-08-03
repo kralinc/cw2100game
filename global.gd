@@ -2,8 +2,8 @@ extends Node
 
 signal take_enemy_territory(cell:Vector2i)
 
-var MAP_NAME = "smallfourplayer"
-var humanPlayers:Dictionary = {2: true}
+var MAP_NAME = "largetestlessbs"
+var humanPlayers:Dictionary = {2:true}
 
 var mapScene:PackedScene
 var mapUnitsIncId = 0
@@ -19,6 +19,9 @@ var currentPlayerIterator:int = 0
 var numImportantTiles:int = 0
 var specialNames:Dictionary
 var cellHighlightColors:Array = [Color(1, 0.8, 0, 1), Color(1, 0, 0, 1), Color(0, 0.5, 1, 1), Color(1, 0, 0, 0.5)]
+
+var spectatorMode:bool = false
+var spectatorTurn:bool = false
 
 var turn = 1
 var intraTurnCounter = 0
@@ -41,11 +44,14 @@ func setupMap():
 func setupFactions():
 	var neutral = Faction.new()
 	neutral.fullName = "Neutral"
-	neutral.color = Color(0,0,0)
+	neutral.color = Color(0,0,0,0)
 	neutral.flag = load("res://icon.svg")
 	factions[0] = neutral
 
-	var file = FileAccess.open("res://config/factions.json", FileAccess.READ)
+	var file = FileAccess.open("res://maps/%s/factions.json" % [MAP_NAME], FileAccess.READ)
+	if not file:
+		print("Could not open factions file. Reverting to default factions.")
+		file = FileAccess.open("res://maps/common_data/factions.json", FileAccess.READ)
 	var json_string = file.get_as_text()
 	file.close()
 
@@ -61,7 +67,10 @@ func setupFactions():
 		faction.id = faction_data.id
 		faction.fullName = faction_data.fullName
 		faction.color = Color(faction_data.color[0], faction_data.color[1], faction_data.color[2])
-		faction.flag = load("res://assets/" + faction_data.flag)
+		if FileAccess.file_exists("res://maps/%s/assets/flags/%s" % [MAP_NAME, faction_data.flag]):
+			faction.flag = load("res://maps/%s/assets/flags/%s" % [MAP_NAME, faction_data.flag])
+		else:
+			faction.flag = load("res://maps/common_data/assets/flags/%s" % faction_data.flag)
 		factions[i + 1] = faction  # Start IDs at 1 instead of 0 due to hardcoded neutral faction
 	
 
@@ -75,9 +84,30 @@ func setupTerrain():
 	terrain["NONE"] = TerrainData.new(".", ".", 0)
 	
 func setupUnitTypes():
-	unitTypes["infantry"] = UnitType.new("res://assets/soldier.png", "infantry", 100, "artillery", 3)
-	unitTypes["tank"] = UnitType.new("res://assets/tank.png", "tank", 90, "infantry", 4)
-	unitTypes["artillery"] = UnitType.new("res://assets/artillery.png", "artillery", 110, "tank", 2)
+	var file = FileAccess.open("res://maps/%s/units.json" % [MAP_NAME], FileAccess.READ)
+	if not file:
+		print("Could not open units file. Reverting to default units.")
+		file = FileAccess.open("res://maps/common_data/units.json", FileAccess.READ)
+
+	var json_string = file.get_as_text()
+	file.close()
+
+	var json = JSON.new()
+	var parse_result = json.parse(json_string)
+	if (parse_result != OK):
+		print("Error parsing JSON: ", json.get_error_message())
+		return
+
+	for key in json.data.keys():
+		var unit_data = json.data[key]
+
+		var texturePath = ""
+		if FileAccess.file_exists("res://maps/%s/assets/units/%s" % [MAP_NAME, unit_data.texture]):
+			texturePath = "res://maps/%s/assets/units/%s" % [MAP_NAME, unit_data.texture]
+		else:
+			texturePath = "res://maps/common_data/assets/units/%s" % unit_data.texture
+
+		unitTypes[key] = UnitType.new(texturePath, key, unit_data.hp, unit_data.advantageVersus, unit_data.movement, unit_data.uiName)
 
 func getEmptyCell(pos):
 	var emptyCell = CellData.new()
@@ -122,9 +152,18 @@ func setupSpecialNames():
 			specialNames[cell] = tileName
 
 func getNextFactionId():
+	if currentPlayer == 0 and spectatorMode and spectatorTurn:
+		spectatorTurn = false
+		return factionsList[0]
 	currentPlayerIterator += 1
-	return factionsList[currentPlayerIterator % factionsList.size()]
-	
+	var nextFactionId = currentPlayerIterator % factionsList.size()
+	if nextFactionId == 0 and spectatorMode and not spectatorTurn:
+		spectatorTurn = true
+		return 0
+	else:
+		return factionsList[nextFactionId]
+
+
 func cellAroundImportantTile(cell:Vector2i):
 	if mapData[cell].important:
 		return true

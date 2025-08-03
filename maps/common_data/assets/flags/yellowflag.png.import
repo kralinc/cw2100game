@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ed7iun0b3daf"
-path="res://.godot/imported/canadaflag.png-7017513c16a3c5488e370443687720ef.ctex"
+uid="uid://le0tr1u2didk"
+path="res://.godot/imported/yellowflag.png-1594ce08517f523268ef0776554fd77f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/canadaflag.png"
-dest_files=["res://.godot/imported/canadaflag.png-7017513c16a3c5488e370443687720ef.ctex"]
+source_file="res://maps/common_data/assets/flags/yellowflag.png"
+dest_files=["res://.godot/imported/yellowflag.png-1594ce08517f523268ef0776554fd77f.ctex"]
 
 [params]
 

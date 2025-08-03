@@ -80,7 +80,7 @@ func initMap():
 	
 func getPath(from:Vector2i, to:Vector2i, allowPartial:bool):
 	var endSpaceHasEnemy = false
-	if (mapData.has(to) and mapData[to].unit != null and mapData[to].unit.faction != mapData[from].unit.faction):
+	if (mapData.has(to) and mapData[to].unit != null and (mapData.has(from) and mapData[from].unit != null and mapData[to].unit.faction != mapData[from].unit.faction)):
 		endSpaceHasEnemy = true
 		setCellOccupied(to, false)
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://jxfqm5qawyd0"
-path="res://.godot/imported/artillery.png-ac77ea3afae2c9736a67861522772b4f.ctex"
+uid="uid://bv6f0kbs1yfi"
+path="res://.godot/imported/blueflag.png-022758c6d3ae96a39b4e8ee87e8798bb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/artillery.png"
-dest_files=["res://.godot/imported/artillery.png-ac77ea3afae2c9736a67861522772b4f.ctex"]
+source_file="res://maps/common_data/assets/flags/blueflag.png"
+dest_files=["res://.godot/imported/blueflag.png-022758c6d3ae96a39b4e8ee87e8798bb.ctex"]
 
 [params]
 

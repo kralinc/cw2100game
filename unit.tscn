@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://1d8uthypsr1v" path="res://MapUnit.gd" id="1_gqqc4"]
 [ext_resource type="Texture2D" uid="uid://bknh2u8xwctne" path="res://assets/hex_white.png" id="1_ryqge"]
-[ext_resource type="Texture2D" uid="uid://bn1y5f27it6u8" path="res://assets/soldier.png" id="2_n0b2i"]
-[ext_resource type="Texture2D" uid="uid://behd4c8r8c0gh" path="res://assets/usaflagtest.png" id="4_qsgrv"]
+[ext_resource type="Texture2D" uid="uid://bn1y5f27it6u8" path="res://maps/common_data/assets/units/soldier.png" id="2_n0b2i"]
+[ext_resource type="Texture2D" uid="uid://behd4c8r8c0gh" path="res://maps/largetestlessbs/assets/flags/usaflagtest.png" id="4_qsgrv"]
 [ext_resource type="Shader" uid="uid://e1yi2mm4ro3g" path="res://circle.gdshader" id="5_hcs4m"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_jofek"]

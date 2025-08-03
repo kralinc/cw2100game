@@ -19,5 +19,10 @@
     "11,20": "Albuquerque",
     "16,14": "Denver",
     "-12,14": "San Francisco",
-    "-6,22": "Los Angeles"
+    "-6,22": "Los Angeles",
+    "3,4": "Boise",
+    "16,3": "Billings",
+    "26,5": "Pierre",
+    "35,5": "Minneapolis",
+    "2,18": "Las Vegas"
 }

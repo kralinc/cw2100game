@@ -33,10 +33,20 @@ static func gatherAssignments(tasks:Array, faction:Faction) -> Array:
 	# Find the score for each task for each unit. Pick the highest scoring unit for each task.
 	for task in tasks:
 		for unitPosition in faction.unitPositions.keys():
+			if (Global.hgh.getPath(unitPosition, task.target, true).is_empty()):
+				continue  # Skip if no path exists to the target
+			elif (Global.mapData[unitPosition].unit.hp == Global.unitTypes[Global.mapData[unitPosition].unit.type.name].hp and task.type == taskTypes.RETREAT):
+				continue #No need to retreat if unit is at full health
+
 			var distance = unitPosition.distance_to(task.target)
 			var modifier = 0
 			if task.type == taskTypes.RETREAT:
 				modifier = taskTypes.size() - ((Global.mapData[unitPosition].unit.hp / Global.unitTypes[Global.mapData[unitPosition].unit.type.name].hp) * taskTypes.size())
+			elif task.type == taskTypes.ATTACK_ENEMY:
+				if Global.mapData[unitPosition].unit.hasAdvantageAgainst(Global.mapData[task.target].unit):
+					modifier = 1  # Prefer units with advantage
+				elif Global.mapData[task.target].unit.hasAdvantageAgainst(Global.mapData[unitPosition].unit):
+					modifier = -1  # Avoid units with disadvantage
 			
 			var score = (taskTypes.size() - task.type + modifier) / distance
 			assignments.append({"task": task, "unit": unitPosition, "score": score})
@@ -51,6 +61,8 @@ static func assignTasks(assignments:Array) -> Array:
 	var assignedUnits:Dictionary = {}
 	var allocatedTasks:Dictionary = {}
 	for assignment in assignments:
+		if (randf() > 0.95):
+			continue  # Randomly skip some assignments to add unpredictability
 		if (assignedUnits.has(assignment.unit) or (allocatedTasks.has("%s,%s,%s" % [assignment.task.type, assignment.task.target.x, assignment.task.target.y]))):
 			continue  # Skip if unit is already assigned
 		assignedUnits[assignment.unit] = true
@@ -74,6 +86,8 @@ static func placeReinforcements(faction:Faction):
 	var reinforcementCount = Global.getReinforcementCount()
 	var unitsToCreate :Array = []
 	for i in range(reinforcementCount):
+		if availableTiles.is_empty():
+			break
 		var numUnitTypes = Global.unitTypes.size()
 		var unitType = Global.unitTypes.values()[randi() % numUnitTypes]
 		var tile = availableTiles.pop_front()

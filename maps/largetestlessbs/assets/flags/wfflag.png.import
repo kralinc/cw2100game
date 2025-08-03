@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://behd4c8r8c0gh"
-path="res://.godot/imported/usaflagtest.png-008d03b5e22294f9925c8d8fb47b0f15.ctex"
+uid="uid://chfolku2ny5ay"
+path="res://.godot/imported/wfflag.png-89b12576b00b1618453d9cf2480ebc71.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/usaflagtest.png"
-dest_files=["res://.godot/imported/usaflagtest.png-008d03b5e22294f9925c8d8fb47b0f15.ctex"]
+source_file="res://maps/largetestlessbs/assets/flags/wfflag.png"
+dest_files=["res://.godot/imported/wfflag.png-89b12576b00b1618453d9cf2480ebc71.ctex"]
 
 [params]
 

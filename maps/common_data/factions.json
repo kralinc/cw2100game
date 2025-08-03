@@ -1,0 +1,26 @@
+[
+    {
+        "id": 1,
+        "fullName": "Blue Team",
+        "color": [0, 0, 1],
+        "flag": "blueflag.png"
+    },
+    {
+        "id": 2,
+        "fullName": "Yellow Team",
+        "color": [0.6, 0.6, 0],
+        "flag": "yellowflag.png"
+    },
+    {
+        "id": 3,
+        "fullName": "Green Team",
+        "color": [0, 1, 0.5],
+        "flag": "greenflag.png"
+    },
+    {
+        "id": 4,
+        "fullName": "Red Team",
+        "color": [0.83, 0.15, 0.1],
+        "flag": "redflag.png"
+    }
+]

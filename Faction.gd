@@ -12,3 +12,6 @@ var isAi:bool = false
 var isDead:bool = false
 var tilesLostLastTurn:Dictionary
 var visibleTiles:Dictionary
+var controlledTiles:Dictionary
+
+var numControlledTilesPerTurn:Array = []

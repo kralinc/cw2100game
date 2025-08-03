@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d4bgv3jb21m0l"
-path="res://.godot/imported/koaflag.png-aff1db265098d6ec081941be41ca65f1.ctex"
+uid="uid://jxfqm5qawyd0"
+path="res://.godot/imported/artillery.png-198a7f73e7f522d4d73e39f331359318.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/koaflag.png"
-dest_files=["res://.godot/imported/koaflag.png-aff1db265098d6ec081941be41ca65f1.ctex"]
+source_file="res://maps/common_data/assets/units/artillery.png"
+dest_files=["res://.godot/imported/artillery.png-198a7f73e7f522d4d73e39f331359318.ctex"]
 
 [params]
 

@@ -12,7 +12,7 @@ func setUnitInfo(unit:Unit) -> void:
 		$UnitInfo.visible = false
 	else:
 		$UnitInfo.visible = true
-		$UnitInfo/UnitTypeLabel.text = unit.type.name
+		$UnitInfo/UnitTypeLabel.text = unit.type.uiName
 		setHealthBar($UnitInfo/HealthBar, unit.hp)
 		$UnitInfo/MovementLabel.text = "Movement: %s" % unit.movePoints
 
@@ -79,8 +79,8 @@ func _on_root_combat_panel_data(data: CombatData) -> void:
 		var defenderFaction:Faction = Global.factions[defenderUnit.faction]
 		$CombatPanel/AttackerFlag.texture = attackerFaction.flag
 		$CombatPanel/DefenderFlag.texture = defenderFaction.flag
-		$CombatPanel/AttackerLabel.text = attackerUnit.type.name
-		$CombatPanel/DefenderLabel.text = defenderUnit.type.name
+		$CombatPanel/AttackerLabel.text = attackerUnit.type.uiName
+		$CombatPanel/DefenderLabel.text = defenderUnit.type.uiName
 		setHealthBar($CombatPanel/AttackerHealthBarHigh, attackerUnit.hp - data.attackerMinDamage)
 		setHealthBar($CombatPanel/AttackerHealthBarLow, attackerUnit.hp - data.attackerMaxDamage)
 		$CombatPanel/AttackerDamageLabel.text = "%d - %d" % [attackerUnit.hp - data.attackerMinDamage, attackerUnit.hp - data.attackerMaxDamage]

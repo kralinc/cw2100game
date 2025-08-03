@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bn1y5f27it6u8"
-path="res://.godot/imported/soldier.png-d4ce965d7194f8ab18ed5a8aff7ca2f9.ctex"
+uid="uid://54pivf6vx4mw"
+path="res://.godot/imported/tank.png-c5511203a6b2c84785d4ab62e0028de6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/soldier.png"
-dest_files=["res://.godot/imported/soldier.png-d4ce965d7194f8ab18ed5a8aff7ca2f9.ctex"]
+source_file="res://maps/common_data/assets/units/tank.png"
+dest_files=["res://.godot/imported/tank.png-c5511203a6b2c84785d4ab62e0028de6.ctex"]
 
 [params]
 

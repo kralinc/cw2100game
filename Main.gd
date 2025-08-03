@@ -10,8 +10,6 @@ signal next_turn()
 
 enum {PLAY_MODE, REINFORCEMENT_MODE, MULTI_MOVE}
 
-
-
 var inputMode = PLAY_MODE
 var hoveredCell = Vector2i()
 var clickedCell = Vector2i()
@@ -49,7 +47,8 @@ func _process(delta):
 
 func doHighlight():
 	$MapContainer/Map/Highlight.clear()
-	highlightLostTiles()
+	if not Global.spectatorTurn:
+		highlightLostTiles()
 	if (clickedCell != null):
 		doClickedHighlight(clickedCell)
 	highlightUnitMultiSelect()
@@ -193,17 +192,23 @@ func takeEnemyTerritory(unitCell:Vector2i, unit:Unit) -> void:
 	cells.push_back(unitCell)
 	for cell in cells:
 		if (cell == unitCell or Global.mapData[cell].unit == null):
-			var mapCell = Global.mapData[cell]
-			if mapCell.important:
-				print("Important tile taken: ", mapCell.pos)
-				Global.factions[mapCell.faction].importantTiles.erase(mapCell.pos)
-				Global.factions[unit.faction].importantTiles[mapCell.pos] = true
-				update_top_panel.emit()
-			if (mapCell.faction != unit.faction):
-				Global.factions[mapCell.faction].tilesLostLastTurn[mapCell.pos] = true
-			mapCell.faction = unit.faction
-			$MapContainer/Map/FactionControl.set_cell(cell, 1, Vector2i(0,0), unit.faction)
-			$MapContainer/Map/FOW.set_cell(cell, -1)
+			captureCell(cell, unit.faction)
+
+func captureCell(cellId:Vector2i, toFaction:int) -> void:
+	var mapCell = Global.mapData[cellId]
+	if mapCell.important:
+		print("Important tile taken: ", mapCell.pos)
+		Global.factions[mapCell.faction].importantTiles.erase(mapCell.pos)
+		Global.factions[toFaction].importantTiles[mapCell.pos] = true
+		update_top_panel.emit()
+	if (mapCell.faction != toFaction):
+		Global.factions[mapCell.faction].tilesLostLastTurn[mapCell.pos] = true
+		Global.factions[toFaction].controlledTiles[mapCell.pos] = true
+		Global.factions[mapCell.faction].controlledTiles.erase(mapCell.pos)
+	mapCell.faction = toFaction
+	$MapContainer/Map/FactionControl.set_cell(cellId, 1, Vector2i(0,0), toFaction)
+	$MapContainer/Map/FOW.set_cell(cellId, -1)
+		
 			
 func updateFowAroundCell(cell:Vector2i):
 	for outerCell in Global.hgh.getNeighbors(cell):
@@ -303,6 +308,7 @@ func initFactionControl():
 			var faction = getFactionAtPos(pos)
 			cell.modulate = Global.factions[faction].color
 			Global.mapData[pos].faction = faction
+			Global.factions[faction].controlledTiles[pos] = true
 			if Global.mapData[pos].important:
 				Global.factions[faction].importantTiles[pos] = true
 
@@ -344,6 +350,9 @@ func initPathfinding():
 	Global.hgh.initMap()
 	
 func nextTurnFogOfWar(player:int):
+	if Global.spectatorTurn:
+		revealAll()
+		return
 	var playerIsHuman:bool = Global.humanPlayers.has(player)
 	for tile in Global.mapData:
 		var cell = Global.mapData[tile]
@@ -369,17 +378,26 @@ func nextTurnFogOfWar(player:int):
 					$MapContainer/Map/FOW.set_cell(outerCell, -1)
 				if Global.mapData[outerCell].unit != null:
 					setUnitVisible(outerCell, true)
+
+func revealAll():
+	print("revealall")
+	for cellId in Global.mapData.keys():
+		var cell = Global.mapData[cellId]
+		Global.factions[Global.currentPlayer].visibleTiles[cellId] = true
+		$MapContainer/Map/FOW.set_cell(cellId, -1)
+		if cell.unit != null:
+			setUnitVisible(cellId, true)
 					
 func setUnitVisible(cell:Vector2i, visible:bool):
 	var cellData = Global.mapData[cell]
-	if Global.humanPlayers.has(Global.currentPlayer):
+	if Global.humanPlayers.has(Global.currentPlayer) or Global.spectatorTurn:
 		if (Global.mapUnits[cellData.unit.mapUnitId].visible != visible):
-			Global.mapUnits[cellData.unit.mapUnitId].visible = visible
 			Global.mapUnits[cellData.unit.mapUnitId].position = cellData.worldPos
+			Global.mapUnits[cellData.unit.mapUnitId].visible = visible
 	Global.hgh.setCellOccupied(cell, visible)
 	
 func getUnitVisible(cell:Vector2i):
-	return Global.mapData.has(cell) and Global.mapData[cell].unit != null and $MapContainer/Map/FOW.get_cell_tile_data(cell) == null
+	return Global.mapData.has(cell) and Global.mapData[cell].unit != null and Global.factions[Global.currentPlayer].visibleTiles.has(cell)
 
 func nextTurnUnitSetup(player:int):
 	for id in Global.mapUnits:
@@ -413,40 +431,51 @@ func doAITurn():
 	nextTurn()
 
 func nextTurn():
-	if (inputMode == MULTI_MOVE):
-		exitMultiMoveMode()
-	if inputMode == PLAY_MODE:
-		var unitPositionsCopy = Global.factions[Global.currentPlayer].unitPositions.duplicate()
-		for cell in unitPositionsCopy:
-			var unit = Global.mapData[cell].unit
-			if not unit.movePath.is_empty():
-				moveUnit(unit, unit.position)
-	
-		Global.intraTurnCounter += 1
-		if (Global.intraTurnCounter >= Global.factionsList.size()):
-			Global.turnsUntilReinforcement -= 1
-			Global.turn += 1
-			Global.intraTurnCounter = 0
-	elif inputMode == REINFORCEMENT_MODE:
-		Global.reinforcementModeCounter += 1
+	nextTurnEndOfTurnActions()
+	nextTurnStartOfTurnActions()
+
+func nextTurnEndOfTurnActions():
+	if not Global.spectatorTurn:
+		if (inputMode == MULTI_MOVE):
+			exitMultiMoveMode()
+		if inputMode == PLAY_MODE:
+			for cell in Global.factions[Global.currentPlayer].unitPositions.keys():
+				var unit = Global.mapData[cell].unit
+				if not unit.movePath.is_empty():
+					moveUnit(unit, unit.position)
 		
-		if Global.reinforcementModeCounter >= Global.factionsList.size():
-			inputMode = PLAY_MODE
-			set_reinforcement_ui.emit(false)
-			Global.reinforcementModeCounter = 0
-			Global.turnsUntilReinforcement = 10
-			selectedUnitType = null
+			Global.intraTurnCounter += 1
+			if (Global.intraTurnCounter >= Global.factionsList.size()):
+				Global.turnsUntilReinforcement -= 1
+				Global.turn += 1
+				Global.intraTurnCounter = 0
+		elif inputMode == REINFORCEMENT_MODE:
+			Global.reinforcementModeCounter += 1
+			
+			if Global.reinforcementModeCounter >= Global.factionsList.size():
+				inputMode = PLAY_MODE
+				set_reinforcement_ui.emit(false)
+				Global.reinforcementModeCounter = 0
+				Global.turnsUntilReinforcement = 10
+				selectedUnitType = null
 
 	Global.factions[Global.currentPlayer].tilesLostLastTurn.clear()
 	Global.factions[Global.currentPlayer].visibleTiles.clear()
 	# Remove faction if it has no important tiles left
-	if Global.factions[Global.currentPlayer].importantTiles.size() == 0:
+	if not Global.spectatorTurn and Global.factions[Global.currentPlayer].importantTiles.size() == 0:
 		removeFaction()
+
+func nextTurnStartOfTurnActions():
 	Global.currentPlayer = Global.getNextFactionId()
+	var currentFaction = Global.factions[Global.currentPlayer]
 	
 	if inputMode == REINFORCEMENT_MODE:
 		reinforcementCount = Global.getReinforcementCount()
 		set_reinforcement_count_ui.emit(reinforcementCount)
+
+	removeTerritoryPockets()
+	currentFaction.numControlledTilesPerTurn.append(currentFaction.controlledTiles.size())
+
 	nextTurnFogOfWar(Global.currentPlayer)
 	nextTurnUnitSetup(Global.currentPlayer)
 	clearHighlights()
@@ -458,11 +487,12 @@ func nextTurn():
 		set_reinforcement_count_ui.emit(reinforcementCount)
 	next_turn.emit()
 
-	if checkAllHumanPlayersDead():
+	if not Global.spectatorMode and checkAllHumanPlayersDead():
 		print("All human players are dead. Game over.")
+		Global.spectatorMode = true
 		return
 
-	elif (!Global.humanPlayers.has(Global.currentPlayer)):
+	elif (!Global.humanPlayers.has(Global.currentPlayer) and not Global.spectatorTurn):
 		doAITurn()
 
 func checkAllHumanPlayersDead():
@@ -489,6 +519,27 @@ func removeFaction():
 			$MapContainer/Map/FactionControl.set_cell(tile, -1)
 	# Remove faction from the list
 	Global.factionsList.erase(Global.currentPlayer)
+
+func removeTerritoryPockets():
+	# Remove any territory pockets that are not connected to an important tile
+	var importantTiles = Global.factions[Global.currentPlayer].importantTiles.keys()
+	var visited:Dictionary = {}
+	for tile in importantTiles:
+		if not visited.has(tile):
+			floodFillCheckTile(tile, visited, Global.currentPlayer)
+
+	for tile in Global.factions[Global.currentPlayer].controlledTiles.keys():
+		if not visited.has(tile):
+			captureCell(tile, 0)  # Capture the tile for the neutral faction
+
+func floodFillCheckTile(tile:Vector2i, visited:Dictionary, factionId:int):
+	# Check if the tile is part of the faction and not visited
+	if not Global.mapData.has(tile) or Global.mapData[tile].faction != factionId or visited.has(tile):
+		return
+	visited[tile] = true
+	for neighbor in Global.hgh.getNeighbors(tile):
+		floodFillCheckTile(neighbor, visited, factionId)
+	return
 
 func activateSelectBox():
 	$SelectBox.visible = true

@@ -1,0 +1,23 @@
+{
+    "infantry": {
+        "uiName": "Infantry",
+        "movement": 3,
+        "texture": "soldier.png",
+        "hp": 100,
+        "advantageVersus": "artillery"
+    },
+    "tank": {
+        "uiName": "Tank",
+        "movement": 4,
+        "texture": "tank.png",
+        "hp": 90,
+        "advantageVersus": "infantry"
+    },
+    "artillery": {
+        "uiName": "Artillery",
+        "movement": 2,
+        "texture": "artillery.png",
+        "hp": 110,
+        "advantageVersus": "tank"
+    }
+}
