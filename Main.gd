@@ -53,7 +53,7 @@ func doHighlight():
 		doClickedHighlight(clickedCell)
 	highlightUnitMultiSelect()
 	highlightMoveRange()
-	if (selectedUnit != null or (selectedUnit == null and cellContainsFriendlyUnit(hoveredCell))):
+	if (selectedUnit != null or (selectedUnit == null and Global.cellContainsFriendlyUnit(hoveredCell))):
 		var unit = selectedUnit if selectedUnit != null else Global.mapData[hoveredCell].unit
 		doPathHighlight(unit)
 	if (selectedUnit != null or selectedUnitRelativePositions.size() > 0):
@@ -84,7 +84,7 @@ func doHoverPathHighlight():
 		
 func highlightMoveRange():
 	for cell in selectedUnitRange.keys():
-		if (cellContainsEnemyUnit(cell) and $MapContainer/Map/FOW.get_cell_tile_data(cell) == null):
+		if (Global.cellContainsEnemyUnit(cell) and $MapContainer/Map/FOW.get_cell_tile_data(cell) == null):
 			$MapContainer/Map/Highlight.set_cell(cell, 0, Vector2i(0,0), 2)
 		else:
 			$MapContainer/Map/Highlight.set_cell(cell, 0, Vector2i(0,0), 1)
@@ -229,14 +229,14 @@ func getMoveRange(start:Vector2i, range:int) -> Dictionary:
 	
 	while not frontier.empty():
 		current = frontier.extract()
-		if (cellContainsEnemyUnit(current) or cost_so_far[current] >= range):
+		if (Global.cellContainsEnemyUnit(current) or cost_so_far[current] >= range):
 			continue
 		var neighbors = Global.hgh.getNeighbors(current)
 		for next in neighbors:
 			if (not Global.mapData.has(next)):
 				continue
 			var new_cost = cost_so_far[current] + Global.mapData[next].movementCost
-			if (not cost_so_far.has(next) and not cellContainsFriendlyUnit(next)) or (cost_so_far.has(next) and new_cost < cost_so_far[next]):
+			if (not cost_so_far.has(next) and not Global.cellContainsFriendlyUnit(next)) or (cost_so_far.has(next) and new_cost < cost_so_far[next]):
 				cost_so_far[next] = new_cost
 				frontier.put(next, new_cost)
 				came_from[next] = current
@@ -332,12 +332,6 @@ func getFeatureAtPos(pos):
 	var tileData = $MapContainer/Map/Features.get_cell_tile_data(pos)
 	return Global.terrain["NONE"] if tileData == null else Global.terrain[tileData.get_custom_data("name")]
 	
-func cellContainsEnemyUnit(pos):
-	return Global.mapData.has(pos) and Global.mapData[pos].unit != null and Global.mapData[pos].unit.faction != Global.currentPlayer
-	
-func cellContainsFriendlyUnit(pos):
-	return Global.mapData.has(pos) and Global.mapData[pos].unit != null and Global.mapData[pos].unit.faction == Global.currentPlayer
-	
 func clearHighlights():
 	clickedCell = null
 	selectedUnit = null
@@ -390,10 +384,8 @@ func revealAll():
 					
 func setUnitVisible(cell:Vector2i, visible:bool):
 	var cellData = Global.mapData[cell]
-	if Global.humanPlayers.has(Global.currentPlayer) or Global.spectatorTurn:
-		if (Global.mapUnits[cellData.unit.mapUnitId].visible != visible):
-			Global.mapUnits[cellData.unit.mapUnitId].position = cellData.worldPos
-			Global.mapUnits[cellData.unit.mapUnitId].visible = visible
+	if Global.humanPlayers.has(Global.currentPlayer) or Global.spectatorMode:
+		Global.mapUnits[cellData.unit.mapUnitId].visible = visible
 	Global.hgh.setCellOccupied(cell, visible)
 	
 func getUnitVisible(cell:Vector2i):
@@ -405,7 +397,7 @@ func nextTurnUnitSetup(player:int):
 		var unit = Global.mapData[cell].unit
 		if (not unit):
 			print("NULL UNIT: Cell: %s, Player: %s" % [cell, Global.currentPlayer])
-			return
+			continue
 		if unit.faction == player:
 			unit.movePoints = unit.type.movementPoints
 			unit.hp = min(unit.hp + 10, unit.type.hp)
@@ -420,6 +412,7 @@ func doAITurn():
 		for unitDefinition in unitsToCreate:
 			createNewUnit(unitDefinition.position, unitDefinition.type)
 	else:
+		var start_time = Time.get_ticks_msec()
 		var tasks:Array = AIManager.gatherTasks(Global.factions[Global.currentPlayer])
 		var assignments:Array = AIManager.gatherAssignments(tasks, Global.factions[Global.currentPlayer])
 		var assignedTasks:Array = AIManager.assignTasks(assignments)
@@ -427,6 +420,8 @@ func doAITurn():
 			var taskPosition = assignedTask.task.target
 			var unitPosition = assignedTask.unit
 			clickMove(unitPosition, taskPosition)
+		var end_time = Time.get_ticks_msec()
+		print("AI turn for %s took %s ms" % [Global.factions[Global.currentPlayer].fullName, end_time - start_time])
 
 	nextTurn()
 
@@ -521,25 +516,25 @@ func removeFaction():
 	Global.factionsList.erase(Global.currentPlayer)
 
 func removeTerritoryPockets():
+	#Breadth first search
 	# Remove any territory pockets that are not connected to an important tile
 	var importantTiles = Global.factions[Global.currentPlayer].importantTiles.keys()
 	var visited:Dictionary = {}
-	for tile in importantTiles:
-		if not visited.has(tile):
-			floodFillCheckTile(tile, visited, Global.currentPlayer)
+	for importantTile in importantTiles:
+		if visited.has(importantTile):
+			continue
+		visited[importantTile] = true
+		var queue:Array = Global.hgh.getNeighbors(importantTile)
+		while not queue.is_empty():
+			var tile = queue.pop_front()
+			if not Global.mapData.has(tile) or Global.mapData[tile].faction != Global.currentPlayer or visited.has(tile):
+				continue
+			visited[tile] = true
+			queue += Global.hgh.getNeighbors(tile)
 
 	for tile in Global.factions[Global.currentPlayer].controlledTiles.keys():
 		if not visited.has(tile):
 			captureCell(tile, 0)  # Capture the tile for the neutral faction
-
-func floodFillCheckTile(tile:Vector2i, visited:Dictionary, factionId:int):
-	# Check if the tile is part of the faction and not visited
-	if not Global.mapData.has(tile) or Global.mapData[tile].faction != factionId or visited.has(tile):
-		return
-	visited[tile] = true
-	for neighbor in Global.hgh.getNeighbors(tile):
-		floodFillCheckTile(neighbor, visited, factionId)
-	return
 
 func activateSelectBox():
 	$SelectBox.visible = true
@@ -585,7 +580,7 @@ func _input(event):
 					unit_info_data.emit(Global.mapData[pos_hovered].unit)
 				else:
 					unit_info_data.emit(null)
-				if (selectedUnit != null and cellContainsEnemyUnit(pos_hovered) and getUnitVisible(pos_hovered)):
+				if (selectedUnit != null and Global.cellContainsEnemyUnit(pos_hovered) and getUnitVisible(pos_hovered)):
 					var combatData = CombatHelper.getCombatData(Global.mapData[selectedUnit.position], Global.mapData[pos_hovered])
 					combat_panel_data.emit(combatData)
 				else:
@@ -617,13 +612,13 @@ func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx:
 			clickedCell = pos_clicked
 			if (Global.mapData.has(pos_clicked)):
 				if inputMode == PLAY_MODE:
-					if (selectedUnit != null and not cellContainsFriendlyUnit(pos_clicked)):
+					if (selectedUnit != null and not Global.cellContainsFriendlyUnit(pos_clicked)):
 						clickMove(selectedUnit.position, pos_clicked)
 						clearHighlights()
 					else:
 						selectUnit(pos_clicked)
 				elif inputMode == REINFORCEMENT_MODE:
-					if selectedUnitType != null and getFactionAtPos(pos_clicked) == Global.currentPlayer and not cellContainsFriendlyUnit(pos_clicked) and reinforcementCount > 0 and Global.cellAroundImportantTile(pos_clicked):
+					if selectedUnitType != null and getFactionAtPos(pos_clicked) == Global.currentPlayer and not Global.cellContainsFriendlyUnit(pos_clicked) and reinforcementCount > 0 and Global.cellAroundImportantTile(pos_clicked):
 						createNewUnit(pos_clicked, selectedUnitType)
 						reinforcementCount -= 1
 						set_reinforcement_count_ui.emit(reinforcementCount)

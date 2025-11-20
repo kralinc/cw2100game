@@ -21,8 +21,10 @@ func startMove(path:PackedVector2Array) -> void:
 	movePath = path
 
 func moveAlongPath():
-	if movePath.is_empty():
+	if movePath.is_empty() or not visible:
 		moving = false
+		position = Global.mapData[mapPosition].worldPos
+		movePath.clear()
 		return
 
 	var targetPosition = movePath[0]

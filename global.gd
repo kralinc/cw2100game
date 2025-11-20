@@ -2,8 +2,8 @@ extends Node
 
 signal take_enemy_territory(cell:Vector2i)
 
-var MAP_NAME = "largetestlessbs"
-var humanPlayers:Dictionary = {2:true}
+var MAP_NAME = "largetest"
+var humanPlayers:Dictionary = {1: true}
 
 var mapScene:PackedScene
 var mapUnitsIncId = 0
@@ -175,7 +175,7 @@ func cellAroundImportantTile(cell:Vector2i):
 
 func getReinforcementCount():
 	var faction:Faction = factions[currentPlayer]
-	return (faction.importantTiles.size() + 3)/2
+	return (faction.importantTiles.size())/2 + 3
 
 func destroyUnit(cell:Vector2i):
 	if mapData[cell].unit != null:
@@ -200,3 +200,8 @@ func updateUnitPosition(unit:Unit, newPos:Vector2i):
 		unit.position = newPos
 		
 		
+func cellContainsEnemyUnit(pos):
+	return mapData.has(pos) and mapData[pos].unit != null and mapData[pos].unit.faction != currentPlayer
+	
+func cellContainsFriendlyUnit(pos):
+	return mapData.has(pos) and mapData[pos].unit != null and mapData[pos].unit.faction == currentPlayer

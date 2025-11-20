@@ -30,12 +30,12 @@ static func gatherTasks(faction:Faction) -> Array:
 
 static func gatherAssignments(tasks:Array, faction:Faction) -> Array:
 	var assignments:Array = []
+	var tasksReachableByUnit:Dictionary = {}
+
 	# Find the score for each task for each unit. Pick the highest scoring unit for each task.
 	for task in tasks:
 		for unitPosition in faction.unitPositions.keys():
-			if (Global.hgh.getPath(unitPosition, task.target, true).is_empty()):
-				continue  # Skip if no path exists to the target
-			elif (Global.mapData[unitPosition].unit.hp == Global.unitTypes[Global.mapData[unitPosition].unit.type.name].hp and task.type == taskTypes.RETREAT):
+			if (Global.mapData[unitPosition].unit.hp == Global.unitTypes[Global.mapData[unitPosition].unit.type.name].hp and task.type == taskTypes.RETREAT):
 				continue #No need to retreat if unit is at full health
 
 			var distance = unitPosition.distance_to(task.target)
@@ -94,6 +94,31 @@ static func placeReinforcements(faction:Faction):
 		unitsToCreate.append({"position": tile, "type": unitType})
 	return unitsToCreate
 		
+
+#Use BFS to find all tasks reachable by the unit
+static func findTasksReachableByUnit(unitPosition:Vector2i, tasks:Array) -> Dictionary:
+	var taskPositions:Dictionary = {}
+	for task in tasks:
+		taskPositions[task.target] = true
+	var reachableTasks:Dictionary = {}
+	var start:Vector2i = unitPosition
+	var visited:Dictionary = {}
+	visited[start] = true
+	var queue:Array = Global.hgh.getNeighbors(start)
+	var tasksFound = 0
+	while not queue.is_empty():
+		var tile = queue.pop_front()
+		if not Global.mapData.has(tile) or visited.has(tile) or Global.cellContainsFriendlyUnit(tile):
+			continue
+		visited[tile] = true
+		if taskPositions.has(tile):
+			reachableTasks[tile] = true
+			tasksFound += 1
+			if tasksFound == taskPositions.size():
+				return reachableTasks # All tasks found, no need to search further
+		queue += Global.hgh.getNeighbors(tile)
+	return reachableTasks
+
 
 
 static func sortByScore(a, b):
