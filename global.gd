@@ -2,8 +2,7 @@ extends Node
 
 signal take_enemy_territory(cell:Vector2i)
 
-var MAP_NAME = "largetest"
-var humanPlayers:Dictionary = {1: true}
+var humanPlayers:Dictionary = {}
 
 var mapScene:PackedScene
 var mapUnitsIncId = 0
@@ -31,24 +30,29 @@ var interactionState:String
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	setupMap()
-	setupFactions()
-	setupTerrain()
-	setupUnitTypes()
-	setupSpecialNames()
+	return
 
-func setupMap():
-	var mapNameAsset = "res://maps/%s/%s.tscn" % [MAP_NAME, MAP_NAME]
+func setupGameData(mapName, factionControlModes:Dictionary):
+	setupMap(mapName)
+	factions = setupFactions(mapName)
+	setupTerrain()
+	setupUnitTypes(mapName)
+	setupSpecialNames(mapName)
+	setupFactionControl(factionControlModes)
+
+func setupMap(mapName:String):
+	var mapNameAsset = "res://maps/%s/%s.tscn" % [mapName, mapName]
 	mapScene = load(mapNameAsset)
 
-func setupFactions():
+func setupFactions(mapName:String) ->  Dictionary:
+	var factionsDict:Dictionary = {}
 	var neutral = Faction.new()
 	neutral.fullName = "Neutral"
 	neutral.color = Color(0,0,0,0)
 	neutral.flag = load("res://icon.svg")
-	factions[0] = neutral
+	factionsDict[0] = neutral
 
-	var file = FileAccess.open("res://maps/%s/factions.json" % [MAP_NAME], FileAccess.READ)
+	var file = FileAccess.open("res://maps/%s/factions.json" % [mapName], FileAccess.READ)
 	if not file:
 		print("Could not open factions file. Reverting to default factions.")
 		file = FileAccess.open("res://maps/common_data/factions.json", FileAccess.READ)
@@ -59,7 +63,7 @@ func setupFactions():
 	var parse_result = json.parse(json_string)
 	if (parse_result != OK):
 		print("Error parsing JSON: ", json.get_error_message())
-		return
+		return factionsDict
 
 	for i in range(json.data.size()):
 		var faction_data = json.data[i]
@@ -67,11 +71,12 @@ func setupFactions():
 		faction.id = faction_data.id
 		faction.fullName = faction_data.fullName
 		faction.color = Color(faction_data.color[0], faction_data.color[1], faction_data.color[2])
-		if FileAccess.file_exists("res://maps/%s/assets/flags/%s" % [MAP_NAME, faction_data.flag]):
-			faction.flag = load("res://maps/%s/assets/flags/%s" % [MAP_NAME, faction_data.flag])
+		if FileAccess.file_exists("res://maps/%s/assets/flags/%s" % [mapName, faction_data.flag]):
+			faction.flag = load("res://maps/%s/assets/flags/%s" % [mapName, faction_data.flag])
 		else:
 			faction.flag = load("res://maps/common_data/assets/flags/%s" % faction_data.flag)
-		factions[i + 1] = faction  # Start IDs at 1 instead of 0 due to hardcoded neutral faction
+		factionsDict[i + 1] = faction  # Start IDs at 1 instead of 0 due to hardcoded neutral faction
+	return factionsDict
 	
 
 func setupTerrain():
@@ -83,8 +88,8 @@ func setupTerrain():
 	terrain["water"] = TerrainData.new("water", "Water", 3)
 	terrain["NONE"] = TerrainData.new(".", ".", 0)
 	
-func setupUnitTypes():
-	var file = FileAccess.open("res://maps/%s/units.json" % [MAP_NAME], FileAccess.READ)
+func setupUnitTypes(mapName:String) -> void:
+	var file = FileAccess.open("res://maps/%s/units.json" % [mapName], FileAccess.READ)
 	if not file:
 		print("Could not open units file. Reverting to default units.")
 		file = FileAccess.open("res://maps/common_data/units.json", FileAccess.READ)
@@ -102,12 +107,19 @@ func setupUnitTypes():
 		var unit_data = json.data[key]
 
 		var texturePath = ""
-		if FileAccess.file_exists("res://maps/%s/assets/units/%s" % [MAP_NAME, unit_data.texture]):
-			texturePath = "res://maps/%s/assets/units/%s" % [MAP_NAME, unit_data.texture]
+		if FileAccess.file_exists("res://maps/%s/assets/units/%s" % [mapName, unit_data.texture]):
+			texturePath = "res://maps/%s/assets/units/%s" % [mapName, unit_data.texture]
 		else:
 			texturePath = "res://maps/common_data/assets/units/%s" % unit_data.texture
 
 		unitTypes[key] = UnitType.new(texturePath, key, unit_data.hp, unit_data.advantageVersus, unit_data.movement, unit_data.uiName)
+
+func setupFactionControl(factionControlModes:Dictionary):
+	humanPlayers = {}
+	for factionId in factionControlModes.keys():
+		if (factionControlModes[factionId] == true):
+			humanPlayers[factionId] = true
+
 
 func getEmptyCell(pos):
 	var emptyCell = CellData.new()
@@ -130,8 +142,8 @@ func processDeaths(combatResult:CombatResult) -> void:
 	if (combatResult.defenderDead):
 		destroyUnit(combatResult.defenderCell.pos)
 
-func setupSpecialNames():
-	var file = FileAccess.open("res://maps/%s/specialnames.json" % [MAP_NAME], FileAccess.READ)
+func setupSpecialNames(mapName:String) -> void:
+	var file = FileAccess.open("res://maps/%s/specialnames.json" % [mapName], FileAccess.READ)
 	if not file:
 		print("Could not open special names file.")
 		return

@@ -83,10 +83,10 @@ func _on_root_combat_panel_data(data: CombatData) -> void:
 		$CombatPanel/DefenderLabel.text = defenderUnit.type.uiName
 		setHealthBar($CombatPanel/AttackerHealthBarHigh, attackerUnit.hp - data.attackerMinDamage)
 		setHealthBar($CombatPanel/AttackerHealthBarLow, attackerUnit.hp - data.attackerMaxDamage)
-		$CombatPanel/AttackerDamageLabel.text = "%d - %d" % [attackerUnit.hp - data.attackerMinDamage, attackerUnit.hp - data.attackerMaxDamage]
+		$CombatPanel/AttackerDamageLabel.text = "%d - %d" % [attackerUnit.hp - data.attackerMaxDamage, attackerUnit.hp - data.attackerMinDamage]
 		setHealthBar($CombatPanel/DefenderHealthBarHigh, defenderUnit.hp - data.defenderMinDamage)
 		setHealthBar($CombatPanel/DefenderHealthBarLow, defenderUnit.hp - data.defenderMaxDamage)
-		$CombatPanel/DefenderDamageLabel.text = "%d - %d" % [defenderUnit.hp - data.defenderMinDamage, defenderUnit.hp - data.defenderMaxDamage]
+		$CombatPanel/DefenderDamageLabel.text = "%d - %d" % [defenderUnit.hp - data.defenderMaxDamage, defenderUnit.hp - data.defenderMinDamage]
 
 		$CombatPanel/AdvantageLabel.visible = true
 		if attackerUnit.hasAdvantageAgainst(defenderUnit):

@@ -119,13 +119,16 @@ label_settings = SubResource("LabelSettings_8kvbf")
 autowrap_mode = 2
 
 [node name="TurnsUntilReinforceLabel" type="Label" parent="HUD/TopPanel"]
+texture_filter = 1
+texture_repeat = 1
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -113.5
-offset_right = 113.5
-offset_bottom = 23.0
+offset_left = -114.0
+offset_top = 3.0
+offset_right = 113.0
+offset_bottom = 26.0
 grow_horizontal = 2
 text = "Turns until reinforcement: 99"
 
@@ -159,18 +162,6 @@ offset_right = 40.0
 offset_bottom = 23.0
 text = "Important Tiles: 100"
 label_settings = SubResource("LabelSettings_pm5ym")
-
-[node name="Button" type="Button" parent="HUD"]
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_top = -15.5
-offset_right = 173.0
-offset_bottom = 15.5
-grow_vertical = 2
-size_flags_horizontal = 0
-size_flags_vertical = 0
-text = "Toggle Control View"
 
 [node name="TileInfo" type="ColorRect" parent="HUD"]
 anchors_preset = 3
@@ -266,14 +257,17 @@ offset_right = 108.0
 offset_bottom = 65.0
 text = "Movement: 3"
 
-[node name="Button2" type="Button" parent="HUD"]
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = -1.0
-offset_top = -54.0
-offset_right = 85.0
-offset_bottom = -23.0
+[node name="NextTurnButton" type="Button" parent="HUD"]
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 0.062000003
+anchor_right = 1.0
+anchor_bottom = 0.062000003
+offset_left = -85.0
+offset_top = -0.1760025
+offset_right = 1.0
+offset_bottom = 30.823997
+grow_horizontal = 0
 grow_vertical = 2
 size_flags_horizontal = 0
 text = "Next Turn"
@@ -353,7 +347,7 @@ offset_left = 68.0
 offset_top = 55.0
 offset_right = 148.0
 offset_bottom = 99.0
-text = "0-100"
+text = "30-60"
 label_settings = SubResource("LabelSettings_mb5gn")
 
 [node name="DefenderHealthBarHigh" type="ProgressBar" parent="HUD/CombatPanel"]
@@ -386,7 +380,7 @@ offset_left = 243.0
 offset_top = 55.0
 offset_right = 324.0
 offset_bottom = 99.0
-text = "0-100"
+text = "30-60"
 label_settings = SubResource("LabelSettings_mb5gn")
 
 [node name="AdvantageLabel" type="Label" parent="HUD/CombatPanel"]
@@ -445,6 +439,5 @@ metadata/_edit_lock_ = true
 [connection signal="set_reinforcement_ui" from="." to="HUD" method="_on_root_set_reinforcement_ui"]
 [connection signal="unit_info_data" from="." to="HUD" method="_on_root_unit_info_data"]
 [connection signal="update_top_panel" from="." to="HUD" method="_on_root_update_top_panel"]
-[connection signal="pressed" from="HUD/Button" to="." method="_on_button_pressed"]
-[connection signal="pressed" from="HUD/Button2" to="." method="_on_button_2_pressed"]
+[connection signal="pressed" from="HUD/NextTurnButton" to="." method="_on_button_2_pressed"]
 [connection signal="input_event" from="ClickHandler" to="." method="_on_click_handler_input_event"]

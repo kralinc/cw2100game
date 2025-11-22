@@ -34,8 +34,6 @@ func _ready():
 	initFactionControl()
 	initPathfinding()
 	initUnits()
-	#nextTurnFogOfWar(Global.currentPlayer)
-	#nextTurnUnitSetup(Global.currentPlayer)
 	Global.currentPlayerIterator = Global.factionsList.size() - 1
 	nextTurn()
 	Global.intraTurnCounter = 0
@@ -44,6 +42,9 @@ func _ready():
 func _process(delta):
 	getHoverPath()
 	doHighlight()
+
+	if (Input.is_action_pressed("next_turn")):
+		nextTurn()
 
 func doHighlight():
 	$MapContainer/Map/Highlight.clear()

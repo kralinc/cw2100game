@@ -1,0 +1,44 @@
+[gd_scene load_steps=3 format=3 uid="uid://dh6skd271xest"]
+
+[ext_resource type="Texture2D" uid="uid://lcrval3k4ohe" path="res://maps/common_data/assets/flags/greenflag.png" id="1_a3km3"]
+[ext_resource type="Script" uid="uid://bwkwiicnauarn" path="res://FactionSelectUI.gd" id="1_hemv2"]
+
+[node name="FactionSelectUI" type="MarginContainer"]
+custom_minimum_size = Vector2(300, 400)
+anchors_preset = -1
+anchor_right = 0.2703403
+anchor_bottom = 0.665
+offset_right = 0.56799316
+offset_bottom = 0.07998657
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 25
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 25
+theme_override_constants/margin_bottom = 25
+script = ExtResource("1_hemv2")
+metadata/_edit_use_anchors_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Flag" type="TextureRect" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("1_a3km3")
+
+[node name="FactionName" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Placeholder"
+horizontal_alignment = 1
+
+[node name="ControlOption" type="OptionButton" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "CPU"
+popup/item_0/id = 0
+popup/item_1/text = "Human"
+popup/item_1/id = 1
