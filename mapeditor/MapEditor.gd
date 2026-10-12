@@ -3,6 +3,8 @@ extends Control
 const PAINTABLE_LAYERS = ["Terrain", "Features", "FactionControl", "CombatUnitInit", "Important"]
 const FACTION_SOURCE_ID = 1
 const FACTION_COORDS = Vector2i(0, 0)
+# TEMPORARY: placeholder map folder name. Replace with user input later.
+const PROJECT_NAME = "test"
 
 @onready var map: Node2D = $Map
 @onready var layer_select: OptionButton = $UI/Panel/VBox/LayerSelect
@@ -10,6 +12,8 @@ const FACTION_COORDS = Vector2i(0, 0)
 @onready var back_confirm_container: MarginContainer = $UI/BackConfirmContainer
 @onready var camera: CameraController = $Camera2D
 @onready var faction_screen = $UI/FactionManagementScreen
+@onready var save_button: Button = $UI/TopPanel/HBox/SaveButton
+@onready var load_button: Button = $UI/TopPanel/HBox/LoadButton
 
 var current_layer: TileMapLayer
 var button_group := ButtonGroup.new()
@@ -19,6 +23,10 @@ var selected_alt: int = 0
 var painting: bool = false
 # Each entry: { "name": String, "color": Color, "alt_id": int, "flag": String }
 var factions: Array[Dictionary] = []
+var save_path: String = ""
+var dirty: bool = false
+var save_dialog: FileDialog
+var load_dialog: FileDialog
 
 
 func _ready() -> void:
@@ -30,6 +38,12 @@ func _ready() -> void:
 	_on_layer_selected(0)
 	$Camera2D.position = Vector2(600, 400)
 	faction_screen.factions_saved.connect(_on_factions_saved)
+	save_button.pressed.connect(_on_save_pressed)
+	load_button.pressed.connect(_on_load_pressed)
+	save_dialog = _create_dir_dialog("Choose save location")
+	save_dialog.dir_selected.connect(_on_save_dir_selected)
+	load_dialog = _create_dir_dialog("Open map folder")
+	load_dialog.dir_selected.connect(_load_from)
 
 
 func _init_default_factions() -> void:
@@ -89,6 +103,7 @@ func _on_factions_saved(new_factions: Array[Dictionary]) -> void:
 	_init_faction_tiles()
 	if current_layer == map.get_node("FactionControl"):
 		_build_tile_list(current_layer)
+	_set_dirty(true)
 
 
 func _on_layer_selected(index: int) -> void:
@@ -166,6 +181,13 @@ func _on_tile_selected(source: int, coords: Vector2i, alt: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.pressed and not key.echo and key.keycode == KEY_S and key.ctrl_pressed and not faction_screen.visible:
+			_on_save_pressed()
+			get_viewport().set_input_as_handled()
+			return
+
 	# Prevent map painter input if the back confirm dialog or faction screen is open
 	if (back_confirm_container.visible == true):
 		return
@@ -188,9 +210,16 @@ func _paint() -> void:
 		return
 	var cell := current_layer.local_to_map(current_layer.get_local_mouse_position())
 	if selected_source == -1:
+		if current_layer.get_cell_source_id(cell) == -1:
+			return
 		current_layer.erase_cell(cell)
 	else:
+		if current_layer.get_cell_source_id(cell) == selected_source \
+				and current_layer.get_cell_atlas_coords(cell) == selected_coords \
+				and current_layer.get_cell_alternative_tile(cell) == selected_alt:
+			return
 		current_layer.set_cell(cell, selected_source, selected_coords, selected_alt)
+	_set_dirty(true)
 
 
 func _on_back_button_pressed() -> void:
@@ -205,3 +234,202 @@ func _on_confirm_back_button_pressed() -> void:
 func _on_cancel_back_button_pressed() -> void:
 	back_confirm_container.visible = false
 	camera.disable_camera = false
+
+
+func _create_dir_dialog(title: String) -> FileDialog:
+	var dialog := FileDialog.new()
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
+	dialog.access = FileDialog.ACCESS_FILESYSTEM
+	dialog.use_native_dialog = true
+	dialog.title = title
+	add_child(dialog)
+	return dialog
+
+
+func _set_dirty(value: bool) -> void:
+	dirty = value
+	save_button.text = "Save*" if dirty else "Save"
+
+
+func _on_save_pressed() -> void:
+	if save_path.is_empty():
+		save_dialog.popup_centered()
+	else:
+		_save_to(save_path)
+
+
+func _on_save_dir_selected(dir: String) -> void:
+	save_path = dir.path_join(PROJECT_NAME)
+	_save_to(save_path)
+
+
+func _on_load_pressed() -> void:
+	load_dialog.popup_centered()
+
+
+func _save_to(dir: String) -> bool:
+	var flags_dir := dir.path_join("flags")
+	if DirAccess.make_dir_recursive_absolute(flags_dir) != OK:
+		push_error("Could not create save folder: %s" % flags_dir)
+		return false
+	var flag_files := _copy_flags(flags_dir)
+	if not _write_json(dir.path_join("mapdata.json"), _build_map_data()):
+		return false
+	if not _write_json(dir.path_join("factiondata.json"), _build_faction_data(flag_files)):
+		return false
+	_update_flag_paths(flags_dir, flag_files)
+	_set_dirty(false)
+	return true
+
+
+func _write_json(path: String, data: Variant) -> bool:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_error("Could not write %s: %s" % [path, error_string(FileAccess.get_open_error())])
+		return false
+	file.store_string(JSON.stringify(data, "\t"))
+	return true
+
+
+func _build_map_data() -> Array:
+	var terrain: TileMapLayer = map.get_node("Terrain")
+	var features: TileMapLayer = map.get_node("Features")
+	var important: TileMapLayer = map.get_node("Important")
+	var units: TileMapLayer = map.get_node("CombatUnitInit")
+	var factions_layer: TileMapLayer = map.get_node("FactionControl")
+	var data := []
+	for cell in terrain.get_used_cells():
+		data.append({
+			"x": cell.x,
+			"y": cell.y,
+			"terrain": terrain.get_cell_atlas_coords(cell).x,
+			"features": features.get_cell_atlas_coords(cell).x if features.get_cell_source_id(cell) != -1 else -1,
+			"important": important.get_cell_source_id(cell) != -1,
+			"unit": units.get_cell_source_id(cell),
+			"faction": factions_layer.get_cell_alternative_tile(cell) if factions_layer.get_cell_source_id(cell) != -1 else -1,
+		})
+	return data
+
+
+func _build_faction_data(flag_files: Dictionary) -> Array:
+	var data := []
+	for faction in factions:
+		var alt_id: int = faction["alt_id"]
+		var color: Color = faction["color"]
+		data.append({
+			"name": faction["name"],
+			"id": alt_id,
+			"flag_file": flag_files.get(alt_id, ""),
+			"color": color.to_html(false),
+		})
+	return data
+
+
+func _copy_flags(flags_dir: String) -> Dictionary:
+	var flag_files := {}
+	var used_names := {}
+	for faction in factions:
+		var src: String = faction["flag"]
+		if src.is_empty():
+			continue
+		var alt_id: int = faction["alt_id"]
+		var file_name := src.get_file()
+		if used_names.has(file_name):
+			file_name = "%d.png" % alt_id
+		used_names[file_name] = true
+		flag_files[alt_id] = _copy_flag(src, flags_dir, file_name, alt_id)
+	return flag_files
+
+
+func _copy_flag(src: String, flags_dir: String, file_name: String, alt_id: int) -> String:
+	var dest := flags_dir.path_join(file_name)
+	var src_abs := ProjectSettings.globalize_path(src)
+	if src_abs.simplify_path() == dest.simplify_path():
+		return file_name
+	if FileAccess.file_exists(src) and DirAccess.copy_absolute(src_abs, dest) == OK:
+		return file_name
+	var fallback_name := "%d.png" % alt_id
+	var image := _load_flag_image(src)
+	if image == null or image.save_png(flags_dir.path_join(fallback_name)) != OK:
+		push_error("Could not save flag for faction %d from %s" % [alt_id, src])
+		return ""
+	return fallback_name
+
+
+func _load_flag_image(src: String) -> Image:
+	if src.begins_with("res://"):
+		var texture := load(src) as Texture2D
+		return texture.get_image() if texture != null else null
+	return Image.load_from_file(src)
+
+
+func _update_flag_paths(flags_dir: String, flag_files: Dictionary) -> void:
+	for faction in factions:
+		var file_name: String = flag_files.get(faction["alt_id"], "")
+		if not file_name.is_empty():
+			faction["flag"] = flags_dir.path_join(file_name)
+
+
+func _load_from(dir: String) -> void:
+	var map_data = _read_json(dir.path_join("mapdata.json"))
+	var faction_data = _read_json(dir.path_join("factiondata.json"))
+	if not (map_data is Array) or not (faction_data is Array):
+		push_error("Map folder is missing or has invalid data: %s" % dir)
+		return
+	_clear_map()
+	_apply_faction_data(faction_data, dir)
+	_apply_map_data(map_data)
+	save_path = dir
+	_set_dirty(false)
+	_build_tile_list(current_layer)
+
+
+func _read_json(path: String) -> Variant:
+	if not FileAccess.file_exists(path):
+		push_error("Missing file: %s" % path)
+		return null
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if parsed == null:
+		push_error("Invalid JSON: %s" % path)
+	return parsed
+
+
+func _clear_map() -> void:
+	for layer_name in PAINTABLE_LAYERS:
+		var layer: TileMapLayer = map.get_node(layer_name)
+		layer.clear()
+
+
+func _apply_faction_data(entries: Array, dir: String) -> void:
+	factions.clear()
+	for entry in entries:
+		var flag_file: String = entry["flag_file"]
+		factions.append({
+			"name": entry["name"],
+			"alt_id": int(entry["id"]),
+			"color": Color.html(entry["color"]),
+			"flag": dir.path_join("flags").path_join(flag_file) if not flag_file.is_empty() else "",
+		})
+	_init_faction_tiles()
+
+
+func _apply_map_data(entries: Array) -> void:
+	var terrain: TileMapLayer = map.get_node("Terrain")
+	var features: TileMapLayer = map.get_node("Features")
+	var important: TileMapLayer = map.get_node("Important")
+	var units: TileMapLayer = map.get_node("CombatUnitInit")
+	var factions_layer: TileMapLayer = map.get_node("FactionControl")
+	for entry in entries:
+		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
+		terrain.set_cell(cell, 0, Vector2i(int(entry["terrain"]), 0), 0)
+		var features_x := int(entry["features"])
+		if features_x != -1:
+			features.set_cell(cell, 0, Vector2i(features_x, 0), 0)
+		if entry["important"]:
+			important.set_cell(cell, 0, Vector2i.ZERO, 0)
+		var unit := int(entry["unit"])
+		if unit != -1:
+			units.set_cell(cell, unit, Vector2i.ZERO, 0)
+		var faction_alt := int(entry["faction"])
+		if faction_alt != -1:
+			factions_layer.set_cell(cell, FACTION_SOURCE_ID, FACTION_COORDS, faction_alt)
