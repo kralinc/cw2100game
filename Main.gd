@@ -279,7 +279,7 @@ func initHighlightCells():
 		var alternativeId = atlasSource.create_alternative_tile(Vector2i.ZERO, i + 1)
 		atlasSource.get_tile_data(Vector2i.ZERO, alternativeId).modulate = color
 		#Test that the new tile is present
-		if atlasSource.get_tile_data(Vector2i.ZERO, alternativeId - 2) == null:
+		if atlasSource.get_tile_data(Vector2i.ZERO, alternativeId) == null:
 			print("Failed to create alternative tile for color: ", color)
 
 func initMapData():
@@ -383,11 +383,11 @@ func revealAll():
 		if cell.unit != null:
 			setUnitVisible(cellId, true)
 					
-func setUnitVisible(cell:Vector2i, visible:bool):
+func setUnitVisible(cell:Vector2i, _visible:bool):
 	var cellData = Global.mapData[cell]
 	if Global.humanPlayers.has(Global.currentPlayer) or Global.spectatorMode:
-		Global.mapUnits[cellData.unit.mapUnitId].visible = visible
-	Global.hgh.setCellOccupied(cell, visible)
+		Global.mapUnits[cellData.unit.mapUnitId].visible = _visible
+	Global.hgh.setCellOccupied(cell, _visible)
 	
 func getUnitVisible(cell:Vector2i):
 	return Global.mapData.has(cell) and Global.mapData[cell].unit != null and Global.factions[Global.currentPlayer].visibleTiles.has(cell)

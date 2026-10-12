@@ -88,7 +88,11 @@ func getPath(from:Vector2i, to:Vector2i, allowPartial:bool):
 	if (!mapData.has(to)):
 		toId = astar.get_closest_point(to, true)
 
-	var path = astar.get_point_path(getAStarCellId(from), toId, allowPartial)
+	var fromId = getAStarCellId(from)
+	var wasFromDisabled = astar.is_point_disabled(fromId)
+	astar.set_point_disabled(fromId, false)
+	var path = astar.get_point_path(fromId, toId, allowPartial)
+	astar.set_point_disabled(fromId, wasFromDisabled)
 	var integerPath = []
 	for cell in path:
 		integerPath.push_back(Vector2i(int(cell.x), int(cell.y)))
@@ -99,11 +103,11 @@ func getPath(from:Vector2i, to:Vector2i, allowPartial:bool):
 func getAStarCellId(cell:Vector2i)->int:
 	var x_shifted = cell.x + 10000
 	var y_shifted = cell.y + 10000
-	return (x_shifted + y_shifted) * (x_shifted + y_shifted + 1) / 2 + y_shifted
+	return (x_shifted + y_shifted) * (x_shifted + y_shifted + 1) / 2.0 + y_shifted
 
 func getCellFromAStarId(id: int) -> Vector2i:
-	var x_shifted = (1/8) * (-8 * id - 9)
-	var y_shifted = (1/8) * (8 * id - 3)
+	var x_shifted = (1/8.0) * (-8 * id - 9)
+	var y_shifted = (1/8.0) * (8 * id - 3)
 	return Vector2i(x_shifted - 10000, y_shifted - 10000)
 
 

@@ -9,10 +9,10 @@ var hp:float
 var advantageVersus:String
 var movementPoints:int
 
-func _init(sprite:String, name:String, hp:float, advantageVersus:String, movementPoints:int, uiName:String):
-	self.sprite = load(sprite)
-	self.name = name
-	self.hp = hp
-	self.advantageVersus = advantageVersus
-	self.movementPoints = movementPoints
-	self.uiName = uiName
+func _init(_sprite:String, _name:String, _hp:float, _advantageVersus:String, _movementPoints:int, _uiName:String):
+	self.sprite = load(_sprite)
+	self.name = _name
+	self.hp = _hp
+	self.advantageVersus = _advantageVersus
+	self.movementPoints = _movementPoints
+	self.uiName = _uiName
