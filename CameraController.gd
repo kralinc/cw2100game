@@ -1,5 +1,7 @@
 extends Camera2D
 
+class_name CameraController
+
 var dragging = false
 var prevMousePos = Vector2()
 var targetPos = Vector2()
@@ -8,6 +10,8 @@ var zoomSpeed = 0.1
 var maxZoom = 4
 var minZoom = 0.2
 var camLerp = 0.0
+
+@export var disable_camera = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -18,7 +22,9 @@ func _ready():
 func _process(delta):
 	pass
 	
-func _input(event):
+func _unhandled_input(event):
+	if (disable_camera == true):
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_RIGHT:
 			if event.is_pressed():

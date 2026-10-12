@@ -58,3 +58,7 @@ func onStartButtonPressed() -> void:
 	Global.setupGameData(mapName, factionControlModes)
 	Global.spectatorMode = false
 	get_tree().change_scene_to_file("res://root.tscn")
+
+
+func _on_map_editor_button_pressed() -> void:
+	get_tree().change_scene_to_file("res://mapeditor/MapEditor.tscn")
