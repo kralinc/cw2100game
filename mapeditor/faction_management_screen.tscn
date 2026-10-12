@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://da25oldsogk6q"]
+
+[ext_resource type="Script" uid="uid://bqwprth0p1y8y" path="res://mapeditor/faction_management_screen.gd" id="1_faction_screen"]
+
+[node name="FactionManagementScreen" type="MarginContainer" unique_id=1109200210]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 0
+script = ExtResource("1_faction_screen")
+
+[node name="Background" type="Panel" parent="." unique_id=1728308308]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=425475728]
+layout_mode = 2
+
+[node name="TopBarContainer" type="MarginContainer" parent="VBoxContainer" unique_id=796724784]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/TopBarContainer" unique_id=721262985]
+layout_mode = 2
+
+[node name="FactionScreenCloseButton" type="Button" parent="VBoxContainer/TopBarContainer/HBoxContainer" unique_id=1727799270]
+layout_mode = 2
+text = "X"
+
+[node name="AddFactionButton" type="Button" parent="VBoxContainer/TopBarContainer/HBoxContainer" unique_id=223347094]
+layout_mode = 2
+text = "Add Faction"
+
+[node name="FactionManagementContainer" type="MarginContainer" parent="VBoxContainer" unique_id=1066203245]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/FactionManagementContainer" unique_id=1906160107]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="FactionListContainer" type="VBoxContainer" parent="VBoxContainer/FactionManagementContainer/ScrollContainer" unique_id=1579276599]
+layout_mode = 2
+size_flags_horizontal = 3

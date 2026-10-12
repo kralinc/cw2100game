@@ -11,12 +11,13 @@
 [ext_resource type="Texture2D" uid="uid://dnvql35w81c5r" path="res://assets/hex_highlight.png" id="11_17mym"]
 [ext_resource type="Texture2D" uid="uid://c17bukt8sdv44" path="res://assets/dot.png" id="12_xkr8w"]
 [ext_resource type="Script" uid="uid://jee16r5mtq4a" path="res://mapeditor/MapEditor.gd" id="13_mapeditor"]
+[ext_resource type="PackedScene" uid="uid://da25oldsogk6q" path="res://mapeditor/faction_management_screen.tscn" id="13_tf3fd"]
 [ext_resource type="Script" uid="uid://6jpahk8667fl" path="res://CameraController.gd" id="14_camera"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3m4cy"]
 texture = ExtResource("5_3w6ib")
 texture_region_size = Vector2i(74, 64)
-0:0/next_alternative_id = 6
+0:0/next_alternative_id = 7
 0:0/0 = 0
 
 [sub_resource type="TileSet" id="TileSet_pxv74"]
@@ -196,19 +197,24 @@ text = "X"
 layout_mode = 2
 text = "Factions"
 
-[node name="BackConfirmContainer" type="PanelContainer" parent="UI" unique_id=1906007896]
+[node name="BackConfirmContainer" type="MarginContainer" parent="UI" unique_id=1428213325]
 visible = false
+custom_minimum_size = Vector2(200, 100)
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
+offset_left = -100.0
+offset_top = -50.0
+offset_right = 100.0
+offset_bottom = 50.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/BackConfirmContainer" unique_id=326450440]
 layout_mode = 2
@@ -216,6 +222,11 @@ layout_mode = 2
 [node name="Label" type="Label" parent="UI/BackConfirmContainer/VBoxContainer" unique_id=927225081]
 layout_mode = 2
 text = "Are you sure?"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="UI/BackConfirmContainer/VBoxContainer" unique_id=411124873]
+layout_mode = 2
+size_flags_vertical = 3
 
 [node name="HBoxContainer" type="HBoxContainer" parent="UI/BackConfirmContainer/VBoxContainer" unique_id=1001300383]
 layout_mode = 2
@@ -229,6 +240,10 @@ text = "Yes"
 layout_mode = 2
 text = "No"
 
+[node name="FactionManagementScreen" parent="UI" unique_id=1109200210 instance=ExtResource("13_tf3fd")]
+visible = false
+
 [connection signal="pressed" from="UI/TopPanel/HBox/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="UI/TopPanel/HBox/FactionSetupButton" to="." method="_on_faction_setup_button_pressed"]
 [connection signal="pressed" from="UI/BackConfirmContainer/VBoxContainer/HBoxContainer/ConfirmBackButton" to="." method="_on_confirm_back_button_pressed"]
 [connection signal="pressed" from="UI/BackConfirmContainer/VBoxContainer/HBoxContainer/CancelBackButton" to="." method="_on_cancel_back_button_pressed"]

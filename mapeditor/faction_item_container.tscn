@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://c4d1lvdlqmoul"]
+
+[ext_resource type="Script" path="res://mapeditor/faction_item_container.gd" id="1_faction_item"]
+
+[node name="FactionItemContainer" type="MarginContainer" unique_id=161101684]
+script = ExtResource("1_faction_item")
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=729838878]
+layout_mode = 2
+
+[node name="FlagContainer" type="VBoxContainer" parent="HBoxContainer" unique_id=1695027410]
+layout_mode = 2
+
+[node name="FlagTexture" type="TextureRect" parent="HBoxContainer/FlagContainer" unique_id=281981760]
+layout_mode = 2
+custom_minimum_size = Vector2(64, 64)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PickFlagTextureButton" type="Button" parent="HBoxContainer/FlagContainer" unique_id=1843547672]
+layout_mode = 2
+text = "Pick Texture"
+
+[node name="InfoContainer" type="VBoxContainer" parent="HBoxContainer" unique_id=1644282216]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameEdit" type="LineEdit" parent="HBoxContainer/InfoContainer" unique_id=1261118068]
+layout_mode = 2
+text = "BLU"
+
+[node name="ColorContainer" type="HBoxContainer" parent="HBoxContainer/InfoContainer" unique_id=955311579]
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="HBoxContainer/InfoContainer/ColorContainer" unique_id=983506595]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PickColorButton" type="Button" parent="HBoxContainer/InfoContainer/ColorContainer" unique_id=1652120843]
+layout_mode = 2
+text = "Pick Color"
+
+[node name="ColorPicker" type="ColorPicker" parent="HBoxContainer/InfoContainer/ColorContainer" unique_id=1963491602]
+visible = false
+layout_mode = 2
+
+[node name="IDLabel" type="Label" parent="HBoxContainer/InfoContainer" unique_id=1371628381]
+layout_mode = 2
+text = "ID: 1"
+
+[node name="DeleteFactionButton" type="Button" parent="HBoxContainer" unique_id=1262837985]
+layout_mode = 2
+text = "DEL"
