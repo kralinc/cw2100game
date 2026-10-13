@@ -391,7 +391,7 @@ func setUnitVisible(cell:Vector2i, _visible:bool):
 	if Global.humanPlayers.has(Global.currentPlayer) or Global.spectatorMode:
 		Global.mapUnits[cellData.unit.mapUnitId].visible = _visible
 	Global.hgh.setCellOccupied(cell, _visible)
-	
+
 func getUnitVisible(cell:Vector2i):
 	return Global.mapData.has(cell) and Global.mapData[cell].unit != null and Global.factions[Global.currentPlayer].visibleTiles.has(cell)
 
@@ -510,14 +510,18 @@ func removeFaction():
 			Global.factions[Global.currentPlayer].unitPositions.erase(unitPos)
 			Global.mapUnits[unit.mapUnitId].destroySelf()
 			Global.mapUnits.erase(unit.mapUnitId)
+			Global.hgh.setCellOccupied(unitPos, false)
 			Global.mapData[unitPos].unit = null
 	#Clear faction tile ownership
 	for tile in Global.mapData.keys():
 		if Global.mapData[tile].faction == Global.currentPlayer:
 			Global.mapData[tile].faction = 0
 			$MapContainer/Map/FactionControl.set_cell(tile, -1)
-	# Remove faction from the list
-	Global.factionsList.erase(Global.currentPlayer)
+	# Remove faction from the list and step the turn iterator back so the next faction isn't skipped
+	var removedIndex = Global.factionsList.find(Global.currentPlayer)
+	if removedIndex != -1:
+		Global.factionsList.remove_at(removedIndex)
+		Global.currentPlayerIterator = removedIndex - 1
 
 func removeTerritoryPockets():
 	#Breadth first search

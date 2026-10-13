@@ -80,8 +80,10 @@ func initMap():
 	
 func getPath(from:Vector2i, to:Vector2i, allowPartial:bool):
 	var endSpaceHasEnemy = false
+	var endSpaceWasDisabled = false
 	if (mapData.has(to) and mapData[to].unit != null and (mapData.has(from) and mapData[from].unit != null and mapData[to].unit.faction != mapData[from].unit.faction)):
 		endSpaceHasEnemy = true
+		endSpaceWasDisabled = astar.is_point_disabled(getAStarCellId(to))
 		setCellOccupied(to, false)
 
 	var toId:int = getAStarCellId(to)
@@ -97,7 +99,7 @@ func getPath(from:Vector2i, to:Vector2i, allowPartial:bool):
 	for cell in path:
 		integerPath.push_back(Vector2i(int(cell.x), int(cell.y)))
 	if (endSpaceHasEnemy):
-		setCellOccupied(getCellFromAStarId(toId), true)
+		setCellOccupied(to, endSpaceWasDisabled)
 	return integerPath.slice(1) #remove the first tile as we don't want to use it in movement
 	
 func getAStarCellId(cell:Vector2i)->int:
