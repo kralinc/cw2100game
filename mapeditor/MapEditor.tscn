@@ -1,9 +1,45 @@
 [gd_scene format=3 uid="uid://bfaefwfkk8eep"]
 
-[ext_resource type="PackedScene" uid="uid://da25oldsogk6q" path="res://mapeditor/faction_management_screen.tscn" id="13_tf3fd"]
 [ext_resource type="Script" uid="uid://jee16r5mtq4a" path="res://mapeditor/MapEditor.gd" id="13_mapeditor"]
+[ext_resource type="PackedScene" uid="uid://da25oldsogk6q" path="res://mapeditor/faction_management_screen.tscn" id="13_tf3fd"]
 [ext_resource type="Script" uid="uid://6jpahk8667fl" path="res://CameraController.gd" id="14_camera"]
-[ext_resource type="PackedScene" path="res://util/map_template.tscn" id="15_maptemplate"]
+[ext_resource type="PackedScene" uid="uid://dafj20oibctyy" path="res://util/map_template.tscn" id="15_maptemplate"]
+
+[sub_resource type="Animation" id="Animation_2et8o"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("UI/TopPanel/HBox/MapTitleInput:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_0xnso"]
+resource_name = "map_title_required"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("UI/TopPanel/HBox/MapTitleInput:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0.06666667, 0.2, 0.36666667, 0.53333336, 0.7, 0.8666667, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 0.33551362, 0.2695955, 1), Color(1, 1, 1, 1), Color(1, 0.33551362, 0.2695955, 1), Color(1, 1, 1, 1), Color(1, 0.33551362, 0.2695955, 1), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_gaqml"]
+_data = {
+&"RESET": SubResource("Animation_2et8o"),
+&"map_title_required": SubResource("Animation_0xnso")
+}
 
 [node name="MapEditor" type="Control" unique_id=357027129]
 layout_mode = 3
@@ -15,7 +51,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("13_mapeditor")
 
-[node name="Map" parent="." instance=ExtResource("15_maptemplate")]
+[node name="Map" parent="." unique_id=2001148040 instance=ExtResource("15_maptemplate")]
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=258291840]
 script = ExtResource("14_camera")
@@ -75,6 +111,11 @@ text = "Save"
 layout_mode = 2
 text = "Factions"
 
+[node name="MapTitleInput" type="LineEdit" parent="UI/TopPanel/HBox" unique_id=2108411147]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+placeholder_text = "Map Title"
+
 [node name="BackConfirmContainer" type="MarginContainer" parent="UI" unique_id=1428213325]
 visible = false
 custom_minimum_size = Vector2(200, 100)
@@ -93,6 +134,11 @@ theme_override_constants/margin_left = 5
 theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 5
+
+[node name="BG" type="ColorRect" parent="UI/BackConfirmContainer" unique_id=1246573319]
+layout_mode = 2
+color = Color(0.10747976, 0.10747973, 0.10747973, 1)
+metadata/_edit_lock_ = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UI/BackConfirmContainer" unique_id=326450440]
 layout_mode = 2
@@ -120,6 +166,9 @@ text = "No"
 
 [node name="FactionManagementScreen" parent="UI" unique_id=1109200210 instance=ExtResource("13_tf3fd")]
 visible = false
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=858621113]
+libraries/ = SubResource("AnimationLibrary_gaqml")
 
 [connection signal="pressed" from="UI/TopPanel/HBox/BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="UI/TopPanel/HBox/FactionSetupButton" to="." method="_on_faction_setup_button_pressed"]

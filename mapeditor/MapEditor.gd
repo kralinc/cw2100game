@@ -2,9 +2,6 @@ extends Control
 
 const PAINTABLE_LAYERS = ["Terrain", "Features", "FactionControl", "CombatUnitInit", "Important"]
 
-# TEMPORARY: placeholder map folder name. Replace with user input later.
-const PROJECT_NAME = "test"
-
 @onready var map: Node2D = $Map
 @onready var layer_select: OptionButton = $UI/Panel/VBox/LayerSelect
 @onready var tile_list: VBoxContainer = $UI/Panel/VBox/Scroll/TileList
@@ -13,6 +10,8 @@ const PROJECT_NAME = "test"
 @onready var faction_screen = $UI/FactionManagementScreen
 @onready var save_button: Button = $UI/TopPanel/HBox/SaveButton
 @onready var load_button: Button = $UI/TopPanel/HBox/LoadButton
+@onready var map_title_input:LineEdit = $UI/TopPanel/HBox/MapTitleInput
+@onready var animation_player:AnimationPlayer = $AnimationPlayer
 
 var current_layer: TileMapLayer
 var button_group := ButtonGroup.new()
@@ -26,6 +25,7 @@ var save_path: String = ""
 var dirty: bool = false
 var save_dialog: FileDialog
 var load_dialog: FileDialog
+var hoveredCell:Vector2i
 
 
 func _ready() -> void:
@@ -44,6 +44,13 @@ func _ready() -> void:
 	load_dialog = MapLoadHelper.create_dir_dialog("Open map folder", self)
 	load_dialog.dir_selected.connect(_load_from)
 
+func _process(_delta):
+	_do_highlight()
+
+func _do_highlight() -> void:
+	var highlight_layer:TileMapLayer = map.get_node("Highlight")
+	highlight_layer.clear()
+	highlight_layer.set_cell(hoveredCell, 0, Vector2(0,0))
 
 func _init_default_factions() -> void:
 	factions = [
@@ -154,7 +161,11 @@ func _on_tile_selected(source: int, coords: Vector2i, alt: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey:
+	if event is InputEventMouseMotion:
+		var global_pos = get_global_mouse_position()
+		var pos_hovered = map.get_node("Terrain").local_to_map(global_pos)
+		hoveredCell = pos_hovered
+	elif event is InputEventKey:
 		var key := event as InputEventKey
 		if key.pressed and not key.echo and key.keycode == KEY_S and key.ctrl_pressed and not faction_screen.visible:
 			_on_save_pressed()
@@ -216,6 +227,9 @@ func _set_dirty(value: bool) -> void:
 
 
 func _on_save_pressed() -> void:
+	if (map_title_input.text.length() <= 0):
+		animation_player.play("map_title_required")
+		return
 	if save_path.is_empty():
 		save_dialog.popup_centered()
 	else:
@@ -223,7 +237,7 @@ func _on_save_pressed() -> void:
 
 
 func _on_save_dir_selected(dir: String) -> void:
-	save_path = dir.path_join(PROJECT_NAME)
+	save_path = dir.path_join(map_title_input.text)
 	_save_to(save_path)
 
 
