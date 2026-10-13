@@ -273,14 +273,7 @@ func createNewUnit(pos:Vector2i, type:UnitType):
 	
 func initHighlightCells():
 	#Add an alternative tile to the highlight layer for each item in the cellHighlightColors array
-	for i in range(Global.cellHighlightColors.size()):
-		var color = Global.cellHighlightColors[i]
-		var atlasSource = $MapContainer/Map/Highlight.tile_set.get_source(0)
-		var alternativeId = atlasSource.create_alternative_tile(Vector2i.ZERO, i + 1)
-		atlasSource.get_tile_data(Vector2i.ZERO, alternativeId).modulate = color
-		#Test that the new tile is present
-		if atlasSource.get_tile_data(Vector2i.ZERO, alternativeId) == null:
-			print("Failed to create alternative tile for color: ", color)
+	MapLoadHelper.init_highlight_tiles($MapContainer/Map/Highlight, Global.cellHighlightColors)
 
 func initMapData():
 	var map := MapLoadHelper.instantiate_map()

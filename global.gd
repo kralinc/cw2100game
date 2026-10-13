@@ -127,25 +127,7 @@ func processDeaths(combatResult:CombatResult) -> void:
 		destroyUnit(combatResult.defenderCell.pos)
 
 func setupSpecialNames(dir:String) -> void:
-	var file = FileAccess.open(dir.path_join("specialnames.json"), FileAccess.READ)
-	if not file:
-		print("Could not open special names file.")
-		return
-	var json_string = file.get_as_text()
-	file.close()
-
-	var json = JSON.new()
-	var parse_result = json.parse(json_string)
-	if (parse_result != OK):
-		print("Error parsing JSON: ", json.get_error_message())
-		return
-
-	for key in json.data.keys():
-		var splitCoords  = key.split(",")
-		var cell = Vector2i(splitCoords[0].to_int(), splitCoords[1].to_int())
-		var tileName = json.data[key]
-		if (tileName != ""):
-			specialNames[cell] = tileName
+	specialNames = MapLoadHelper.load_special_names(dir)
 
 func getNextFactionId():
 	if currentPlayer == 0 and spectatorMode and spectatorTurn:

@@ -1,6 +1,10 @@
 extends Control
 
 const PAINTABLE_LAYERS = ["Terrain", "Features", "FactionControl", "CombatUnitInit", "Important"]
+const NAME_TILES_MODE = "Name Tiles"
+const HIGHLIGHT_HOVER_ALT = 0
+const HIGHLIGHT_SELECTED_ALT = 2
+const HIGHLIGHT_NAMED_ALT = 3
 
 @onready var map: Node2D = $Map
 @onready var layer_select: OptionButton = $UI/Panel/VBox/LayerSelect
@@ -12,6 +16,7 @@ const PAINTABLE_LAYERS = ["Terrain", "Features", "FactionControl", "CombatUnitIn
 @onready var load_button: Button = $UI/TopPanel/HBox/LoadButton
 @onready var map_title_input:LineEdit = $UI/TopPanel/HBox/MapTitleInput
 @onready var animation_player:AnimationPlayer = $AnimationPlayer
+@onready var highlight_layer: TileMapLayer = $Map/Highlight
 
 var current_layer: TileMapLayer
 var button_group := ButtonGroup.new()
@@ -26,12 +31,18 @@ var dirty: bool = false
 var save_dialog: FileDialog
 var load_dialog: FileDialog
 var hoveredCell:Vector2i
+var naming_mode: bool = false
+var special_names: Dictionary[Vector2i, String] = {}
+var name_cell = null # Vector2i of the tile being named, or null
+var name_input: LineEdit
 
 
 func _ready() -> void:
 	_init_default_factions()
+	MapLoadHelper.init_highlight_tiles(highlight_layer, Global.cellHighlightColors)
 	for layer_name in PAINTABLE_LAYERS:
 		layer_select.add_item(layer_name)
+	layer_select.add_item(NAME_TILES_MODE)
 	layer_select.item_selected.connect(_on_layer_selected)
 	layer_select.select(0)
 	_on_layer_selected(0)
@@ -44,13 +55,29 @@ func _ready() -> void:
 	load_dialog = MapLoadHelper.create_dir_dialog("Open map folder", self)
 	load_dialog.dir_selected.connect(_load_from)
 
-func _process(_delta):
-	_do_highlight()
-
-func _do_highlight() -> void:
-	var highlight_layer:TileMapLayer = map.get_node("Highlight")
+func _redraw_highlights() -> void:
 	highlight_layer.clear()
-	highlight_layer.set_cell(hoveredCell, 0, Vector2(0,0))
+	if naming_mode:
+		for cell in special_names:
+			_refresh_highlight(cell)
+		if name_cell != null:
+			_refresh_highlight(name_cell)
+	_refresh_highlight(hoveredCell)
+
+
+# Redraws a single cell's highlight. Priority: selected > hovered > named.
+func _refresh_highlight(cell: Vector2i) -> void:
+	var alt := -1
+	if naming_mode and name_cell != null and cell == name_cell:
+		alt = HIGHLIGHT_SELECTED_ALT
+	elif cell == hoveredCell:
+		alt = HIGHLIGHT_HOVER_ALT
+	elif naming_mode and special_names.has(cell):
+		alt = HIGHLIGHT_NAMED_ALT
+	if alt == -1:
+		highlight_layer.erase_cell(cell)
+	else:
+		highlight_layer.set_cell(cell, 0, Vector2i.ZERO, alt)
 
 func _init_default_factions() -> void:
 	factions = [
@@ -87,14 +114,67 @@ func _on_factions_saved(new_factions: Array[Dictionary]) -> void:
 
 
 func _on_layer_selected(index: int) -> void:
-	current_layer = map.get_node(PAINTABLE_LAYERS[index])
-	_build_tile_list(current_layer)
+	painting = false
+	naming_mode = index >= PAINTABLE_LAYERS.size()
+	if naming_mode:
+		current_layer = null
+		_build_name_editor()
+	else:
+		current_layer = map.get_node(PAINTABLE_LAYERS[index])
+		_build_tile_list(current_layer)
+	_redraw_highlights()
 
 
-func _build_tile_list(layer: TileMapLayer) -> void:
+func _clear_tile_list() -> void:
 	for child in tile_list.get_children():
 		tile_list.remove_child(child)
 		child.queue_free()
+	name_input = null
+
+
+func _build_name_editor() -> void:
+	_clear_tile_list()
+	name_input = LineEdit.new()
+	name_input.placeholder_text = "Write name here"
+	name_input.text_changed.connect(_on_name_changed)
+	name_input.text_submitted.connect(func(_text): name_input.release_focus())
+	tile_list.add_child(name_input)
+	_update_name_input()
+
+
+func _update_name_input() -> void:
+	if name_input == null:
+		return
+	name_input.editable = name_cell != null
+	name_input.text = special_names.get(name_cell, "") if name_cell != null else ""
+
+
+func _select_name_cell(cell: Vector2i) -> void:
+	if map.get_node("Terrain").get_cell_source_id(cell) == -1:
+		return
+	var previous = name_cell
+	name_cell = cell
+	if previous != null:
+		_refresh_highlight(previous)
+	_refresh_highlight(cell)
+	_update_name_input()
+	name_input.grab_focus()
+	name_input.caret_column = name_input.text.length()
+
+
+func _on_name_changed(new_text: String) -> void:
+	if name_cell == null:
+		return
+	var tile_name := new_text.strip_edges()
+	if tile_name.is_empty():
+		special_names.erase(name_cell)
+	else:
+		special_names[name_cell] = tile_name
+	_set_dirty(true)
+
+
+func _build_tile_list(layer: TileMapLayer) -> void:
+	_clear_tile_list()
 
 	var erase_button := Button.new()
 	erase_button.text = "Erase"
@@ -163,8 +243,12 @@ func _on_tile_selected(source: int, coords: Vector2i, alt: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var global_pos = get_global_mouse_position()
-		var pos_hovered = map.get_node("Terrain").local_to_map(global_pos)
-		hoveredCell = pos_hovered
+		var pos_hovered: Vector2i = map.get_node("Terrain").local_to_map(global_pos)
+		if pos_hovered != hoveredCell:
+			var previous := hoveredCell
+			hoveredCell = pos_hovered
+			_refresh_highlight(previous)
+			_refresh_highlight(hoveredCell)
 	elif event is InputEventKey:
 		var key := event as InputEventKey
 		if key.pressed and not key.echo and key.keycode == KEY_S and key.ctrl_pressed and not faction_screen.visible:
@@ -182,6 +266,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse_button := event as InputEventMouseButton
 		if mouse_button.button_index == MOUSE_BUTTON_LEFT:
+			if naming_mode:
+				if mouse_button.pressed:
+					var terrain: TileMapLayer = map.get_node("Terrain")
+					_select_name_cell(terrain.local_to_map(terrain.get_local_mouse_position()))
+				return
 			painting = mouse_button.pressed
 			if painting:
 				_paint()
@@ -254,6 +343,8 @@ func _save_to(dir: String) -> bool:
 	if not _write_json(dir.path_join("mapdata.json"), MapLoadHelper.build_map_data(map)):
 		return false
 	if not _write_json(dir.path_join("factiondata.json"), _build_faction_data(flag_files)):
+		return false
+	if not _write_json(dir.path_join("specialnames.json"), MapLoadHelper.build_special_names_data(special_names)):
 		return false
 	_update_flag_paths(flags_dir, flag_files)
 	_set_dirty(false)
@@ -338,9 +429,11 @@ func _load_from(dir: String) -> void:
 	_clear_map()
 	_init_faction_tiles()
 	MapLoadHelper.apply_map_data(map, map_data)
+	special_names = MapLoadHelper.load_special_names(dir)
+	name_cell = null
 	save_path = dir
 	_set_dirty(false)
-	_build_tile_list(current_layer)
+	_on_layer_selected(layer_select.selected)
 
 
 func _clear_map() -> void:

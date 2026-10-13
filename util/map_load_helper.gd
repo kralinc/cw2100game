@@ -138,3 +138,32 @@ static func load_flag_texture(path: String) -> Texture2D:
 		if img != null:
 			texture = ImageTexture.create_from_image(img)
 	return texture
+
+static func init_highlight_tiles(highlight_layer: TileMapLayer, colors: Array) -> void:
+	var atlas := highlight_layer.tile_set.get_source(0) as TileSetAtlasSource
+	for i in colors.size():
+		var alt_id := i + 1
+		if not atlas.has_alternative_tile(Vector2i.ZERO, alt_id):
+			atlas.create_alternative_tile(Vector2i.ZERO, alt_id)
+		atlas.get_tile_data(Vector2i.ZERO, alt_id).modulate = colors[i]
+
+static func load_special_names(dir: String) -> Dictionary[Vector2i, String]:
+	var names: Dictionary[Vector2i, String] = {}
+	var path := dir.path_join("specialnames.json")
+	if not FileAccess.file_exists(path):
+		return names
+	var data = read_json(path)
+	if not (data is Dictionary):
+		return names
+	for key in data:
+		var split_coords: PackedStringArray = key.split(",")
+		var tile_name := str(data[key])
+		if split_coords.size() == 2 and not tile_name.is_empty():
+			names[Vector2i(split_coords[0].to_int(), split_coords[1].to_int())] = tile_name
+	return names
+
+static func build_special_names_data(names: Dictionary[Vector2i, String]) -> Dictionary:
+	var data := {}
+	for cell in names:
+		data["%d,%d" % [cell.x, cell.y]] = names[cell]
+	return data
