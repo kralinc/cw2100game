@@ -106,8 +106,8 @@ func getAStarCellId(cell:Vector2i)->int:
 	return (x_shifted + y_shifted) * (x_shifted + y_shifted + 1) / 2.0 + y_shifted
 
 func getCellFromAStarId(id: int) -> Vector2i:
-	var x_shifted = (1/8.0) * (-8 * id - 9)
-	var y_shifted = (1/8.0) * (8 * id - 3)
+	var x_shifted:int = floor((1/8.0) * (-8 * id - 9))
+	var y_shifted:int = floor((1/8.0) * (8 * id - 3))
 	return Vector2i(x_shifted - 10000, y_shifted - 10000)
 
 

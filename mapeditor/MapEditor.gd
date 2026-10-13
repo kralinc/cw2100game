@@ -371,47 +371,24 @@ func _update_flag_paths(flags_dir: String, flag_files: Dictionary) -> void:
 
 
 func _load_from(dir: String) -> void:
-	var map_data = _read_json(dir.path_join("mapdata.json"))
-	var faction_data = _read_json(dir.path_join("factiondata.json"))
-	if not (map_data is Array) or not (faction_data is Array):
+	factions.clear()
+	var map_data = MapLoadHelper.read_json(dir.path_join("mapdata.json"))
+	if not (map_data is Array):
 		push_error("Map folder is missing or has invalid data: %s" % dir)
 		return
+	factions = MapLoadHelper.parse_faction_data(dir)
 	_clear_map()
-	_apply_faction_data(faction_data, dir)
+	_init_faction_tiles()
 	_apply_map_data(map_data)
 	save_path = dir
 	_set_dirty(false)
 	_build_tile_list(current_layer)
 
 
-func _read_json(path: String) -> Variant:
-	if not FileAccess.file_exists(path):
-		push_error("Missing file: %s" % path)
-		return null
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if parsed == null:
-		push_error("Invalid JSON: %s" % path)
-	return parsed
-
-
 func _clear_map() -> void:
 	for layer_name in PAINTABLE_LAYERS:
 		var layer: TileMapLayer = map.get_node(layer_name)
 		layer.clear()
-
-
-func _apply_faction_data(entries: Array, dir: String) -> void:
-	factions.clear()
-	for entry in entries:
-		var flag_file: String = entry["flag_file"]
-		factions.append({
-			"name": entry["name"],
-			"alt_id": int(entry["id"]),
-			"color": Color.html(entry["color"]),
-			"flag": dir.path_join("flags").path_join(flag_file) if not flag_file.is_empty() else "",
-		})
-	_init_faction_tiles()
-
 
 func _apply_map_data(entries: Array) -> void:
 	var terrain: TileMapLayer = map.get_node("Terrain")

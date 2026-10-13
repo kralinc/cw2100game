@@ -1,9 +1,10 @@
-[gd_scene load_steps=14 format=3 uid="uid://ckoelvk7ocqdp"]
+[gd_scene format=3 uid="uid://ckoelvk7ocqdp"]
 
 [ext_resource type="Script" uid="uid://4ke1ixxydpm2" path="res://Main.gd" id="2_qdjwj"]
 [ext_resource type="Script" uid="uid://6jpahk8667fl" path="res://CameraController.gd" id="3_rsdaa"]
 [ext_resource type="Script" uid="uid://r66t3fdjskjs" path="res://HUDController.gd" id="4_kr5ul"]
 [ext_resource type="Texture2D" uid="uid://ca2eygog0jy3n" path="res://assets/otherflagtest.png" id="4_wtva4"]
+[ext_resource type="Texture2D" uid="uid://0pplnenpcetj" path="res://assets/menu/dirt.png" id="5_bf3um"]
 [ext_resource type="Texture2D" uid="uid://8j7pyfgrf322" path="res://assets/water_128px.png" id="9_2h1s5"]
 [ext_resource type="PackedScene" uid="uid://6m37eo4vu10a" path="res://unit.tscn" id="9_7ffpw"]
 [ext_resource type="Texture2D" uid="uid://cn6o3au8veppb" path="res://assets/selectbox.png" id="18_oggwp"]
@@ -18,6 +19,8 @@ font_size = 17
 outline_size = 1
 shadow_size = 10
 shadow_color = Color(0, 0, 0, 0.560784)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_bf3um"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_pm5ym"]
 shadow_size = 2
@@ -35,14 +38,14 @@ shadow_color = Color(0, 0, 0, 1)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bf3um"]
 size = Vector2(5114, 3245)
 
-[node name="Root" type="Node2D"]
+[node name="Root" type="Node2D" unique_id=1715755806]
 script = ExtResource("2_qdjwj")
 unitScene = ExtResource("9_7ffpw")
 
-[node name="MainCam" type="Camera2D" parent="."]
+[node name="MainCam" type="Camera2D" parent="." unique_id=1208555991]
 script = ExtResource("3_rsdaa")
 
-[node name="BgControl" type="Control" parent="MainCam"]
+[node name="BgControl" type="Control" parent="MainCam" unique_id=1815676179]
 z_index = -100
 layout_mode = 3
 anchors_preset = 0
@@ -52,10 +55,10 @@ mouse_filter = 1
 mouse_force_pass_scroll_events = false
 metadata/_edit_lock_ = true
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1268036129]
 script = ExtResource("4_kr5ul")
 
-[node name="ReinforcementUI" type="Control" parent="HUD"]
+[node name="ReinforcementUI" type="Control" parent="HUD" unique_id=2044748736]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -66,7 +69,7 @@ grow_vertical = 2
 mouse_filter = 1
 metadata/_edit_lock_ = true
 
-[node name="ButtonAnchor" type="HBoxContainer" parent="HUD/ReinforcementUI"]
+[node name="ButtonAnchor" type="HBoxContainer" parent="HUD/ReinforcementUI" unique_id=1630987526]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -78,7 +81,7 @@ offset_bottom = 88.0
 grow_vertical = 2
 metadata/_edit_lock_ = true
 
-[node name="ReinforcementLabel" type="Label" parent="HUD/ReinforcementUI"]
+[node name="ReinforcementLabel" type="Label" parent="HUD/ReinforcementUI" unique_id=1247726854]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -92,62 +95,50 @@ text = "REINFORCEMENTS: 999"
 label_settings = SubResource("LabelSettings_wuh61")
 horizontal_alignment = 1
 
-[node name="TopPanel" type="ColorRect" parent="HUD"]
+[node name="PanelContainer" type="PanelContainer" parent="HUD" unique_id=721841446]
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 31.0
 grow_horizontal = 2
-color = Color(0.343931, 0.183065, 0.0750184, 1)
+size_flags_horizontal = 3
+
+[node name="TextureRect" type="TextureRect" parent="HUD/PanelContainer" unique_id=393153614]
+layout_mode = 2
+texture = ExtResource("5_bf3um")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="TopPanel" type="HBoxContainer" parent="HUD/PanelContainer" unique_id=1078095777]
+layout_mode = 2
+theme_override_constants/separation = 32
 metadata/_edit_lock_ = true
 
-[node name="Flag" type="TextureRect" parent="HUD/TopPanel"]
-layout_mode = 0
-offset_top = 1.0
-offset_right = 44.0
-offset_bottom = 30.0
+[node name="Flag" type="TextureRect" parent="HUD/PanelContainer/TopPanel" unique_id=1599985966]
+layout_mode = 2
 texture = ExtResource("4_wtva4")
 expand_mode = 3
 
-[node name="NameLabel" type="Label" parent="HUD/TopPanel"]
-layout_mode = 0
-offset_left = 49.0
-offset_top = 3.0
-offset_right = 318.0
-offset_bottom = 27.0
+[node name="NameLabel" type="Label" parent="HUD/PanelContainer/TopPanel" unique_id=1375877224]
+layout_mode = 2
 text = "United States of America"
 label_settings = SubResource("LabelSettings_8kvbf")
-autowrap_mode = 2
 
-[node name="TurnsUntilReinforceLabel" type="Label" parent="HUD/TopPanel"]
+[node name="VSeparator" type="VSeparator" parent="HUD/PanelContainer/TopPanel" unique_id=274020965]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/separator = SubResource("StyleBoxEmpty_bf3um")
+
+[node name="TurnsUntilReinforceLabel" type="Label" parent="HUD/PanelContainer/TopPanel" unique_id=833377084]
 texture_filter = 1
 texture_repeat = 1
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -114.0
-offset_top = 3.0
-offset_right = 113.0
-offset_bottom = 26.0
-grow_horizontal = 2
+layout_mode = 2
 text = "Turns until reinforcement: 99"
 
-[node name="TurnLabel" type="Label" parent="HUD/TopPanel"]
-layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -94.0
-offset_top = -11.5
-offset_right = -21.0
-offset_bottom = 11.5
-grow_horizontal = 0
-grow_vertical = 2
+[node name="TurnLabel" type="Label" parent="HUD/PanelContainer/TopPanel" unique_id=1235986030]
+layout_mode = 2
 text = "Turn: 999"
 
-[node name="TopPanelExtra" type="TextureRect" parent="HUD"]
+[node name="TopPanelExtra" type="TextureRect" parent="HUD" unique_id=1085808214]
 offset_top = 31.0
 offset_right = 249.0
 offset_bottom = 80.0
@@ -156,14 +147,14 @@ expand_mode = 1
 stretch_mode = 1
 metadata/_edit_lock_ = true
 
-[node name="ImportantLabel" type="Label" parent="HUD/TopPanelExtra"]
+[node name="ImportantLabel" type="Label" parent="HUD/TopPanelExtra" unique_id=1441651951]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 23.0
 text = "Important Tiles: 100"
 label_settings = SubResource("LabelSettings_pm5ym")
 
-[node name="TileInfo" type="ColorRect" parent="HUD"]
+[node name="TileInfo" type="ColorRect" parent="HUD" unique_id=1702613286]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -177,7 +168,7 @@ size_flags_horizontal = 8
 color = Color(0.259294, 0.259294, 0.259294, 1)
 metadata/_edit_lock_ = true
 
-[node name="PosLabel" type="Label" parent="HUD/TileInfo"]
+[node name="PosLabel" type="Label" parent="HUD/TileInfo" unique_id=1267334539]
 layout_mode = 0
 offset_left = 7.0
 offset_top = 32.0
@@ -185,7 +176,7 @@ offset_right = 47.0
 offset_bottom = 55.0
 text = "(0,0)"
 
-[node name="TerrainLabel" type="Label" parent="HUD/TileInfo"]
+[node name="TerrainLabel" type="Label" parent="HUD/TileInfo" unique_id=1048604304]
 layout_mode = 0
 offset_left = 7.0
 offset_top = 55.0
@@ -193,7 +184,7 @@ offset_right = 133.0
 offset_bottom = 78.0
 text = "Hills, Forest"
 
-[node name="FactionLabel" type="Label" parent="HUD/TileInfo"]
+[node name="FactionLabel" type="Label" parent="HUD/TileInfo" unique_id=232439015]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 2.0
@@ -201,7 +192,7 @@ offset_right = 312.0
 offset_bottom = 26.0
 text = "United States of America"
 
-[node name="MoveCostLabel" type="Label" parent="HUD/TileInfo"]
+[node name="MoveCostLabel" type="Label" parent="HUD/TileInfo" unique_id=1721776204]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 78.0
@@ -209,7 +200,7 @@ offset_right = 185.0
 offset_bottom = 101.0
 text = "Movement cost: "
 
-[node name="Flag" type="TextureRect" parent="HUD/TileInfo"]
+[node name="Flag" type="TextureRect" parent="HUD/TileInfo" unique_id=1937741772]
 layout_mode = 0
 offset_left = 296.0
 offset_top = 6.0
@@ -218,7 +209,7 @@ offset_bottom = 44.0
 texture = ExtResource("4_wtva4")
 expand_mode = 3
 
-[node name="UnitInfo" type="ColorRect" parent="HUD"]
+[node name="UnitInfo" type="ColorRect" parent="HUD" unique_id=2134572468]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -229,7 +220,7 @@ size_flags_horizontal = 8
 color = Color(0.259294, 0.259294, 0.259294, 1)
 metadata/_edit_lock_ = true
 
-[node name="UnitTypeLabel" type="Label" parent="HUD/UnitInfo"]
+[node name="UnitTypeLabel" type="Label" parent="HUD/UnitInfo" unique_id=990629927]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 5.0
@@ -238,7 +229,7 @@ offset_bottom = 28.0
 text = "Infantry
 "
 
-[node name="HealthBar" type="ProgressBar" parent="HUD/UnitInfo"]
+[node name="HealthBar" type="ProgressBar" parent="HUD/UnitInfo" unique_id=402952832]
 modulate = Color(0, 1, 0.0588235, 1)
 layout_mode = 0
 offset_left = 197.0
@@ -249,7 +240,7 @@ step = 0.1
 value = 100.0
 show_percentage = false
 
-[node name="MovementLabel" type="Label" parent="HUD/UnitInfo"]
+[node name="MovementLabel" type="Label" parent="HUD/UnitInfo" unique_id=658592460]
 layout_mode = 0
 offset_left = 7.0
 offset_top = 42.0
@@ -257,7 +248,7 @@ offset_right = 108.0
 offset_bottom = 65.0
 text = "Movement: 3"
 
-[node name="NextTurnButton" type="Button" parent="HUD"]
+[node name="NextTurnButton" type="Button" parent="HUD" unique_id=1968409660]
 anchors_preset = -1
 anchor_left = 1.0
 anchor_top = 0.062000003
@@ -272,7 +263,7 @@ grow_vertical = 2
 size_flags_horizontal = 0
 text = "Next Turn"
 
-[node name="CombatPanel" type="ColorRect" parent="HUD"]
+[node name="CombatPanel" type="ColorRect" parent="HUD" unique_id=1960290558]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
@@ -286,7 +277,7 @@ grow_vertical = 0
 color = Color(0.258824, 0.258824, 0.258824, 1)
 metadata/_edit_lock_ = true
 
-[node name="AttackerLabel" type="Label" parent="HUD/CombatPanel"]
+[node name="AttackerLabel" type="Label" parent="HUD/CombatPanel" unique_id=1572538675]
 layout_mode = 0
 offset_left = 62.0
 offset_top = 6.0
@@ -294,7 +285,7 @@ offset_right = 182.0
 offset_bottom = 29.0
 text = "ATTACKERRRRR"
 
-[node name="DefenderFlag" type="TextureRect" parent="HUD/CombatPanel"]
+[node name="DefenderFlag" type="TextureRect" parent="HUD/CombatPanel" unique_id=1986191808]
 layout_mode = 0
 offset_left = 341.0
 offset_right = 398.0
@@ -302,14 +293,14 @@ offset_bottom = 38.0
 texture = ExtResource("4_wtva4")
 expand_mode = 3
 
-[node name="AttackerFlag" type="TextureRect" parent="HUD/CombatPanel"]
+[node name="AttackerFlag" type="TextureRect" parent="HUD/CombatPanel" unique_id=662411677]
 layout_mode = 0
 offset_right = 57.0
 offset_bottom = 38.0
 texture = ExtResource("4_wtva4")
 expand_mode = 3
 
-[node name="DefenderLabel" type="Label" parent="HUD/CombatPanel"]
+[node name="DefenderLabel" type="Label" parent="HUD/CombatPanel" unique_id=1815853423]
 layout_mode = 0
 offset_left = 212.0
 offset_top = 6.0
@@ -318,7 +309,7 @@ offset_bottom = 29.0
 text = "DEFENDERRRRR"
 horizontal_alignment = 2
 
-[node name="AttackerHealthBarHigh" type="ProgressBar" parent="HUD/CombatPanel"]
+[node name="AttackerHealthBarHigh" type="ProgressBar" parent="HUD/CombatPanel" unique_id=1043795162]
 modulate = Color(0, 1, 0.0588235, 1)
 layout_mode = 0
 offset_top = 38.0
@@ -329,7 +320,7 @@ value = 17.4
 fill_mode = 3
 show_percentage = false
 
-[node name="AttackerHealthBarLow" type="ProgressBar" parent="HUD/CombatPanel"]
+[node name="AttackerHealthBarLow" type="ProgressBar" parent="HUD/CombatPanel" unique_id=1012192814]
 modulate = Color(0, 1, 0.0588235, 1)
 layout_mode = 0
 offset_left = 26.0
@@ -341,7 +332,7 @@ value = 17.4
 fill_mode = 3
 show_percentage = false
 
-[node name="AttackerDamageLabel" type="Label" parent="HUD/CombatPanel"]
+[node name="AttackerDamageLabel" type="Label" parent="HUD/CombatPanel" unique_id=1385506674]
 layout_mode = 0
 offset_left = 68.0
 offset_top = 55.0
@@ -350,7 +341,7 @@ offset_bottom = 99.0
 text = "30-60"
 label_settings = SubResource("LabelSettings_mb5gn")
 
-[node name="DefenderHealthBarHigh" type="ProgressBar" parent="HUD/CombatPanel"]
+[node name="DefenderHealthBarHigh" type="ProgressBar" parent="HUD/CombatPanel" unique_id=355931668]
 modulate = Color(0, 1, 0.0588235, 1)
 layout_mode = 0
 offset_left = 372.0
@@ -362,7 +353,7 @@ value = 17.4
 fill_mode = 3
 show_percentage = false
 
-[node name="DefenderHealthBarLow" type="ProgressBar" parent="HUD/CombatPanel"]
+[node name="DefenderHealthBarLow" type="ProgressBar" parent="HUD/CombatPanel" unique_id=547170943]
 modulate = Color(0, 1, 0.0588235, 1)
 layout_mode = 0
 offset_left = 346.0
@@ -374,7 +365,7 @@ value = 17.4
 fill_mode = 3
 show_percentage = false
 
-[node name="DefenderDamageLabel" type="Label" parent="HUD/CombatPanel"]
+[node name="DefenderDamageLabel" type="Label" parent="HUD/CombatPanel" unique_id=1959172481]
 layout_mode = 0
 offset_left = 243.0
 offset_top = 55.0
@@ -383,7 +374,7 @@ offset_bottom = 99.0
 text = "30-60"
 label_settings = SubResource("LabelSettings_mb5gn")
 
-[node name="AdvantageLabel" type="Label" parent="HUD/CombatPanel"]
+[node name="AdvantageLabel" type="Label" parent="HUD/CombatPanel" unique_id=393203202]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -400,7 +391,7 @@ text = "DISADVANTAGE"
 label_settings = SubResource("LabelSettings_uvybh")
 horizontal_alignment = 1
 
-[node name="Label" type="Label" parent="HUD/CombatPanel"]
+[node name="Label" type="Label" parent="HUD/CombatPanel" unique_id=864823199]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -412,9 +403,9 @@ offset_bottom = 55.0
 grow_horizontal = 2
 text = "Projected Remaining HP"
 
-[node name="MapContainer" type="Node2D" parent="."]
+[node name="MapContainer" type="Node2D" parent="." unique_id=1473756858]
 
-[node name="SelectBox" type="NinePatchRect" parent="."]
+[node name="SelectBox" type="NinePatchRect" parent="." unique_id=920493902]
 visible = false
 texture = ExtResource("18_oggwp")
 patch_margin_left = 12
@@ -422,11 +413,11 @@ patch_margin_top = 12
 patch_margin_right = 12
 patch_margin_bottom = 12
 
-[node name="ClickHandler" type="Area2D" parent="."]
+[node name="ClickHandler" type="Area2D" parent="." unique_id=642231981]
 scale = Vector2(2, 2)
 metadata/_edit_lock_ = true
 
-[node name="Collider" type="CollisionShape2D" parent="ClickHandler"]
+[node name="Collider" type="CollisionShape2D" parent="ClickHandler" unique_id=1640453327]
 position = Vector2(1622, 1048.5)
 scale = Vector2(2, 2)
 shape = SubResource("RectangleShape2D_bf3um")

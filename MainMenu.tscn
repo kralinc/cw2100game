@@ -60,15 +60,10 @@ text = "Start"
 [node name="MapSelectContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer2/VBoxContainer" unique_id=482448690]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer2/VBoxContainer/MapSelectContainer" unique_id=602498590]
-layout_mode = 2
-text = "Map:"
-
-[node name="MapSelectDropdown" type="OptionButton" parent="MarginContainer/VBoxContainer2/VBoxContainer/MapSelectContainer" unique_id=973705882]
-unique_name_in_owner = true
+[node name="MapSelectButton" type="Button" parent="MarginContainer/VBoxContainer2/VBoxContainer/MapSelectContainer" unique_id=1750120186]
 layout_mode = 2
 size_flags_horizontal = 3
-fit_to_longest_item = false
+text = "Select Map"
 
 [node name="MapEditorButton" type="Button" parent="MarginContainer/VBoxContainer2/VBoxContainer" unique_id=1742135460]
 layout_mode = 2
@@ -89,4 +84,5 @@ layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 3
 
+[connection signal="pressed" from="MarginContainer/VBoxContainer2/VBoxContainer/MapSelectContainer/MapSelectButton" to="." method="_on_map_select_button_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer2/VBoxContainer/MapEditorButton" to="." method="_on_map_editor_button_pressed"]

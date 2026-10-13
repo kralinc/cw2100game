@@ -41,7 +41,7 @@ func setup(data: Dictionary) -> void:
 	id_label.text = "ID: %d" % alt_id
 	flag_path = data.get("flag", "")
 	if flag_path != "":
-		_load_texture(flag_path)
+		flag_texture.texture = MapLoadHelper.load_flag_texture(flag_path)
 	else:
 		flag_texture.texture = null
 
@@ -50,24 +50,13 @@ func get_data() -> Dictionary:
 	return {"name": name_edit.text, "color": color_rect.color, "alt_id": alt_id, "flag": flag_path}
 
 
-func _load_texture(path: String) -> void:
-	var texture: Texture2D = null
-	if path.begins_with("res://"):
-		texture = load(path) as Texture2D
-	else:
-		var img := Image.load_from_file(path)
-		if img != null:
-			texture = ImageTexture.create_from_image(img)
-	flag_texture.texture = texture
-
-
 func _on_pick_flag_button_pressed() -> void:
 	flag_dialog.popup_centered_ratio(0.6)
 
 
 func _on_flag_file_selected(path: String) -> void:
 	flag_path = path
-	_load_texture(path)
+	flag_texture.texture = MapLoadHelper.load_flag_texture(path)
 
 
 func _on_pick_color_button_pressed() -> void:

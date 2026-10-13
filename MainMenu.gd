@@ -3,44 +3,33 @@ extends Control
 const FactionSelectUI = preload("res://FactionSelectUI.tscn")
 
 var mapName:String
-var factions:Dictionary
+var factions:Dictionary[int, Faction]
 var factionControlModes:Dictionary = {}
-
-var mapSelectDropdown:OptionButton
 var factionContainer:HBoxContainer
 var startButton:Button
 
+var load_dialog: FileDialog
+var map_dir:String
+
 func _ready() -> void:
-	mapSelectDropdown = get_node("%MapSelectDropdown")
-	mapSelectDropdown.item_selected.connect(onMapSelected)
 
 	factionContainer = get_node("%FactionContainer")
 	startButton = get_node("%StartButton")
 	startButton.pressed.connect(onStartButtonPressed)
 
-	getMaps()
-	onMapSelected(0)
+	load_dialog = MapLoadHelper.create_dir_dialog("Open map folder", self)
+	load_dialog.dir_selected.connect(_load_map_data)
+	
+	
 
-func getMaps() -> void:
-	var maps_path = "res://maps"
-	var dir = DirAccess.open(maps_path)
-	if dir:
-		var subdirs = dir.get_directories()
-		for subdir_name in subdirs:
-			if subdir_name != "common_data":
-				mapSelectDropdown.add_item(subdir_name)
-	else:
-		printerr("Failed to open maps directory: %s" % maps_path)
-
-func onMapSelected(itemIndex:int) -> void:
-	mapName = mapSelectDropdown.get_item_text(itemIndex)
-	factions = Global.setupFactions(mapName)
-	factionControlModes = {}
+func _setup_faction_UI(factionInfo:Dictionary[int, Faction]):
 	# Clear previous faction UI elements
 	for child in factionContainer.get_children():
 		child.queue_free()
+	factionControlModes = {}
+
 	var firstFaction:bool = true
-	for faction in factions.values():
+	for faction in factionInfo.values():
 		if faction.id == 0: continue # Skip neutral faction
 
 		var factionSelectUi = FactionSelectUI.instantiate()
@@ -50,6 +39,7 @@ func onMapSelected(itemIndex:int) -> void:
 
 		factionControlModes[faction.id] = true if firstFaction else false
 		firstFaction = false
+
 
 func onFactionControlOptionSelected(factionId:int, isHuman:bool) -> void:
 	factionControlModes[factionId] = isHuman
@@ -62,3 +52,14 @@ func onStartButtonPressed() -> void:
 
 func _on_map_editor_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://mapeditor/MapEditor.tscn")
+
+
+func _on_map_select_button_pressed() -> void:
+	load_dialog.popup_centered()
+
+func _load_map_data(dir: String) -> void:
+	map_dir = dir
+	var faction_data = MapLoadHelper.parse_faction_data(dir)
+	var factionInfo = MapLoadHelper.create_faction_info_from_faction_data(faction_data)
+	_setup_faction_UI(factionInfo)
+	factions = factionInfo

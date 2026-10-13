@@ -187,7 +187,7 @@ func cellAroundImportantTile(cell:Vector2i):
 
 func getReinforcementCount():
 	var faction:Faction = factions[currentPlayer]
-	return (faction.importantTiles.size())/2 + 3
+	return floor(faction.importantTiles.size()/2.0) + 3
 
 func destroyUnit(cell:Vector2i):
 	if mapData[cell].unit != null:
