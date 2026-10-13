@@ -1,0 +1,89 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://mapeditor/unit_item_container.gd" id="1_unit_item"]
+
+[node name="UnitItemContainer" type="MarginContainer"]
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+script = ExtResource("1_unit_item")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="TextureContainer" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="UnitTexture" type="TextureRect" parent="HBoxContainer/TextureContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PickTextureButton" type="Button" parent="HBoxContainer/TextureContainer"]
+layout_mode = 2
+text = "Pick Texture"
+
+[node name="InfoContainer" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameContainer" type="HBoxContainer" parent="HBoxContainer/InfoContainer"]
+layout_mode = 2
+
+[node name="UiNameLabel" type="Label" parent="HBoxContainer/InfoContainer/NameContainer"]
+layout_mode = 2
+text = "Name"
+
+[node name="UiNameEdit" type="LineEdit" parent="HBoxContainer/InfoContainer/NameContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Display name"
+
+[node name="NameLabel" type="Label" parent="HBoxContainer/InfoContainer/NameContainer"]
+layout_mode = 2
+text = "Key"
+
+[node name="NameEdit" type="LineEdit" parent="HBoxContainer/InfoContainer/NameContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "unique_key"
+
+[node name="StatsContainer" type="HBoxContainer" parent="HBoxContainer/InfoContainer"]
+layout_mode = 2
+
+[node name="HpLabel" type="Label" parent="HBoxContainer/InfoContainer/StatsContainer"]
+layout_mode = 2
+text = "HP"
+
+[node name="HpSpin" type="SpinBox" parent="HBoxContainer/InfoContainer/StatsContainer"]
+layout_mode = 2
+min_value = 1.0
+max_value = 10000.0
+value = 100.0
+
+[node name="MovementLabel" type="Label" parent="HBoxContainer/InfoContainer/StatsContainer"]
+layout_mode = 2
+text = "Movement"
+
+[node name="MovementSpin" type="SpinBox" parent="HBoxContainer/InfoContainer/StatsContainer"]
+layout_mode = 2
+min_value = 1.0
+max_value = 50.0
+value = 3.0
+
+[node name="AdvantageMenu" type="MenuButton" parent="HBoxContainer/InfoContainer"]
+layout_mode = 2
+text = "Strong vs: none"
+flat = false
+alignment = 0
+
+[node name="IDLabel" type="Label" parent="HBoxContainer/InfoContainer"]
+layout_mode = 2
+text = "ID: 0"
+
+[node name="DeleteUnitButton" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "DEL"

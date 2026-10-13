@@ -14,4 +14,4 @@ var mapUnitId:int
 #var name:String
 
 func hasAdvantageAgainst(other:Unit):
-	return type.advantageVersus == other.type.name
+	return type.advantageVersus.has(other.type.name)

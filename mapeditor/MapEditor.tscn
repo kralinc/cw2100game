@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://da25oldsogk6q" path="res://mapeditor/faction_management_screen.tscn" id="13_tf3fd"]
 [ext_resource type="Script" uid="uid://6jpahk8667fl" path="res://CameraController.gd" id="14_camera"]
 [ext_resource type="PackedScene" uid="uid://dafj20oibctyy" path="res://util/map_template.tscn" id="15_maptemplate"]
+[ext_resource type="PackedScene" path="res://mapeditor/unit_management_screen.tscn" id="16_unitscreen"]
 
 [sub_resource type="Animation" id="Animation_2et8o"]
 length = 0.001
@@ -111,6 +112,10 @@ text = "Save"
 layout_mode = 2
 text = "Factions"
 
+[node name="UnitsSetupButton" type="Button" parent="UI/TopPanel/HBox" unique_id=1503256606]
+layout_mode = 2
+text = "Units"
+
 [node name="MapTitleInput" type="LineEdit" parent="UI/TopPanel/HBox" unique_id=2108411147]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
@@ -167,10 +172,14 @@ text = "No"
 [node name="FactionManagementScreen" parent="UI" unique_id=1109200210 instance=ExtResource("13_tf3fd")]
 visible = false
 
+[node name="UnitManagementScreen" parent="UI" unique_id=1846203917 instance=ExtResource("16_unitscreen")]
+visible = false
+
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=858621113]
 libraries/ = SubResource("AnimationLibrary_gaqml")
 
 [connection signal="pressed" from="UI/TopPanel/HBox/BackButton" to="." method="_on_back_button_pressed"]
 [connection signal="pressed" from="UI/TopPanel/HBox/FactionSetupButton" to="." method="_on_faction_setup_button_pressed"]
+[connection signal="pressed" from="UI/TopPanel/HBox/UnitsSetupButton" to="." method="_on_units_setup_button_pressed"]
 [connection signal="pressed" from="UI/BackConfirmContainer/VBoxContainer/HBoxContainer/ConfirmBackButton" to="." method="_on_confirm_back_button_pressed"]
 [connection signal="pressed" from="UI/BackConfirmContainer/VBoxContainer/HBoxContainer/CancelBackButton" to="." method="_on_cancel_back_button_pressed"]

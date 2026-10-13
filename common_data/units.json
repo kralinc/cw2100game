@@ -1,23 +1,26 @@
 {
     "infantry": {
+        "id": 0,
         "uiName": "Infantry",
         "movement": 3,
         "texture": "soldier.png",
         "hp": 100,
-        "advantageVersus": "artillery"
+        "advantageVersus": ["artillery"]
     },
     "tank": {
+        "id": 1,
         "uiName": "Tank",
         "movement": 4,
         "texture": "tank.png",
         "hp": 90,
-        "advantageVersus": "infantry"
+        "advantageVersus": ["infantry"]
     },
     "artillery": {
+        "id": 2,
         "uiName": "Artillery",
         "movement": 2,
         "texture": "artillery.png",
         "hp": 110,
-        "advantageVersus": "tank"
+        "advantageVersus": ["tank"]
     }
 }

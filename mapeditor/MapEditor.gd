@@ -12,6 +12,7 @@ const HIGHLIGHT_NAMED_ALT = 3
 @onready var back_confirm_container: MarginContainer = $UI/BackConfirmContainer
 @onready var camera: CameraController = $Camera2D
 @onready var faction_screen = $UI/FactionManagementScreen
+@onready var unit_screen = $UI/UnitManagementScreen
 @onready var save_button: Button = $UI/TopPanel/HBox/SaveButton
 @onready var load_button: Button = $UI/TopPanel/HBox/LoadButton
 @onready var map_title_input:LineEdit = $UI/TopPanel/HBox/MapTitleInput
@@ -26,6 +27,8 @@ var selected_alt: int = 0
 var painting: bool = false
 # Each entry: { "name": String, "color": Color, "alt_id": int, "flag": String }
 var factions: Array[Dictionary] = []
+# Unit definitions, see MapLoadHelper.load_unit_definitions for the format
+var units: Array[Dictionary] = []
 var save_path: String = ""
 var dirty: bool = false
 var save_dialog: FileDialog
@@ -39,6 +42,7 @@ var name_input: LineEdit
 
 func _ready() -> void:
 	_init_default_factions()
+	_init_default_units()
 	MapLoadHelper.init_highlight_tiles(highlight_layer, Global.cellHighlightColors)
 	for layer_name in PAINTABLE_LAYERS:
 		layer_select.add_item(layer_name)
@@ -48,6 +52,7 @@ func _ready() -> void:
 	_on_layer_selected(0)
 	$Camera2D.position = Vector2(600, 400)
 	faction_screen.factions_saved.connect(_on_factions_saved)
+	unit_screen.units_saved.connect(_on_units_saved)
 	save_button.pressed.connect(_on_save_pressed)
 	load_button.pressed.connect(_on_load_pressed)
 	save_dialog = MapLoadHelper.create_dir_dialog("Choose save location", self)
@@ -91,6 +96,15 @@ func _init_faction_tiles() -> void:
 	MapLoadHelper.init_faction_tiles(map.get_node("FactionControl"), factions)
 
 
+func _init_default_units() -> void:
+	units = MapLoadHelper.default_unit_definitions()
+	_init_unit_tiles()
+
+
+func _init_unit_tiles() -> void:
+	MapLoadHelper.init_unit_tiles(map.get_node("CombatUnitInit"), units)
+
+
 func _get_faction_by_alt(alt_id: int) -> Dictionary:
 	for faction in factions:
 		if faction["alt_id"] == alt_id:
@@ -109,6 +123,21 @@ func _on_factions_saved(new_factions: Array[Dictionary]) -> void:
 	camera.disable_camera = false
 	_init_faction_tiles()
 	if current_layer == map.get_node("FactionControl"):
+		_build_tile_list(current_layer)
+	_set_dirty(true)
+
+
+func _on_units_setup_button_pressed() -> void:
+	unit_screen.open(units)
+	camera.disable_camera = true
+	painting = false
+
+
+func _on_units_saved(new_units: Array[Dictionary]) -> void:
+	units = new_units
+	camera.disable_camera = false
+	_init_unit_tiles()
+	if current_layer == map.get_node("CombatUnitInit"):
 		_build_tile_list(current_layer)
 	_set_dirty(true)
 
@@ -251,15 +280,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			_refresh_highlight(hoveredCell)
 	elif event is InputEventKey:
 		var key := event as InputEventKey
-		if key.pressed and not key.echo and key.keycode == KEY_S and key.ctrl_pressed and not faction_screen.visible:
+		if key.pressed and not key.echo and key.keycode == KEY_S and key.ctrl_pressed and not faction_screen.visible and not unit_screen.visible:
 			_on_save_pressed()
 			get_viewport().set_input_as_handled()
 			return
 
-	# Prevent map painter input if the back confirm dialog or faction screen is open
+	# Prevent map painter input if the back confirm dialog or a management screen is open
 	if (back_confirm_container.visible == true):
 		return
-	if faction_screen.visible:
+	if faction_screen.visible or unit_screen.visible:
 		return
 
 
@@ -336,17 +365,34 @@ func _on_load_pressed() -> void:
 
 func _save_to(dir: String) -> bool:
 	var flags_dir := dir.path_join("flags")
-	if DirAccess.make_dir_recursive_absolute(flags_dir) != OK:
-		push_error("Could not create save folder: %s" % flags_dir)
-		return false
-	var flag_files := _copy_flags(flags_dir)
+	var units_dir := dir.path_join(MapLoadHelper.MAP_UNIT_TEXTURE_FOLDER)
+	for folder in [flags_dir, units_dir]:
+		if DirAccess.make_dir_recursive_absolute(folder) != OK:
+			push_error("Could not create save folder: %s" % folder)
+			return false
+	var flag_sources := {}
+	for faction in factions:
+		flag_sources[faction["alt_id"]] = faction["flag"]
+	var flag_files := MapLoadHelper.copy_image_files(flag_sources, flags_dir)
+	var texture_sources := {}
+	for unit in units:
+		texture_sources[unit["id"]] = unit["texture"]
+	var texture_files := MapLoadHelper.copy_image_files(texture_sources, units_dir)
 	if not _write_json(dir.path_join("mapdata.json"), MapLoadHelper.build_map_data(map)):
 		return false
 	if not _write_json(dir.path_join("factiondata.json"), _build_faction_data(flag_files)):
 		return false
 	if not _write_json(dir.path_join("specialnames.json"), MapLoadHelper.build_special_names_data(special_names)):
 		return false
-	_update_flag_paths(flags_dir, flag_files)
+	if not _write_json(dir.path_join("units.json"), MapLoadHelper.build_unit_data(units, texture_files)):
+		return false
+	# Point at the copies so later saves don't depend on the original files
+	for faction in factions:
+		if flag_files.has(faction["alt_id"]):
+			faction["flag"] = flags_dir.path_join(flag_files[faction["alt_id"]])
+	for unit in units:
+		if texture_files.has(unit["id"]):
+			unit["texture"] = units_dir.path_join(texture_files[unit["id"]])
 	_set_dirty(false)
 	return true
 
@@ -375,59 +421,16 @@ func _build_faction_data(flag_files: Dictionary) -> Array:
 	return data
 
 
-func _copy_flags(flags_dir: String) -> Dictionary:
-	var flag_files := {}
-	var used_names := {}
-	for faction in factions:
-		var src: String = faction["flag"]
-		if src.is_empty():
-			continue
-		var alt_id: int = faction["alt_id"]
-		var file_name := src.get_file()
-		if used_names.has(file_name):
-			file_name = "%d.png" % alt_id
-		used_names[file_name] = true
-		flag_files[alt_id] = _copy_flag(src, flags_dir, file_name, alt_id)
-	return flag_files
-
-
-func _copy_flag(src: String, flags_dir: String, file_name: String, alt_id: int) -> String:
-	var dest := flags_dir.path_join(file_name)
-	var src_abs := ProjectSettings.globalize_path(src)
-	if src_abs.simplify_path() == dest.simplify_path():
-		return file_name
-	if FileAccess.file_exists(src) and DirAccess.copy_absolute(src_abs, dest) == OK:
-		return file_name
-	var fallback_name := "%d.png" % alt_id
-	var image := _load_flag_image(src)
-	if image == null or image.save_png(flags_dir.path_join(fallback_name)) != OK:
-		push_error("Could not save flag for faction %d from %s" % [alt_id, src])
-		return ""
-	return fallback_name
-
-
-func _load_flag_image(src: String) -> Image:
-	if src.begins_with("res://"):
-		var texture := load(src) as Texture2D
-		return texture.get_image() if texture != null else null
-	return Image.load_from_file(src)
-
-
-func _update_flag_paths(flags_dir: String, flag_files: Dictionary) -> void:
-	for faction in factions:
-		var file_name: String = flag_files.get(faction["alt_id"], "")
-		if not file_name.is_empty():
-			faction["flag"] = flags_dir.path_join(file_name)
-
-
 func _load_from(dir: String) -> void:
 	factions.clear()
 	var map_data := MapLoadHelper.load_map_data(dir)
 	if map_data.is_empty():
 		return
 	factions = MapLoadHelper.parse_faction_data(dir)
+	units = MapLoadHelper.load_unit_definitions(dir)
 	_clear_map()
 	_init_faction_tiles()
+	_init_unit_tiles()
 	MapLoadHelper.apply_map_data(map, map_data)
 	special_names = MapLoadHelper.load_special_names(dir)
 	name_cell = null

@@ -2,22 +2,24 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bn1y5f27it6u8"
-path="res://.godot/imported/soldier.png-9a9818a7ae8808fb3ae849acb6ebb5f9.ctex"
+uid="uid://lcrval3k4ohe"
+path="res://.godot/imported/greenflag.png-a88b9e2ee8a47ebf0b751de6ba037fc6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://maps/common_data/assets/units/soldier.png"
-dest_files=["res://.godot/imported/soldier.png-9a9818a7ae8808fb3ae849acb6ebb5f9.ctex"]
+source_file="res://common_data/assets/flags/greenflag.png"
+dest_files=["res://.godot/imported/greenflag.png-a88b9e2ee8a47ebf0b751de6ba037fc6.ctex"]
 
 [params]
 
 compress/mode=0
 compress/high_quality=false
 compress/lossy_quality=0.7
+compress/uastc_level=0
+compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
@@ -25,6 +27,10 @@ mipmaps/generate=false
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
+process/channel_remap/red=0
+process/channel_remap/green=1
+process/channel_remap/blue=2
+process/channel_remap/alpha=3
 process/fix_alpha_border=true
 process/premult_alpha=false
 process/normal_map_invert_y=false

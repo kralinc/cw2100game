@@ -9,7 +9,8 @@ var flag_path: String = ""
 @onready var name_edit: LineEdit = $HBoxContainer/InfoContainer/NameEdit
 @onready var color_rect: ColorRect = $HBoxContainer/InfoContainer/ColorContainer/ColorRect
 @onready var pick_color_button: Button = $HBoxContainer/InfoContainer/ColorContainer/PickColorButton
-@onready var color_picker: ColorPicker = $HBoxContainer/InfoContainer/ColorContainer/ColorPicker
+@onready var color_popup: PopupPanel = $ColorPopup
+@onready var color_picker: ColorPicker = $ColorPopup/ColorPicker
 @onready var id_label: Label = $HBoxContainer/InfoContainer/IDLabel
 @onready var delete_button: Button = $HBoxContainer/DeleteFactionButton
 
@@ -41,7 +42,7 @@ func setup(data: Dictionary) -> void:
 	id_label.text = "ID: %d" % alt_id
 	flag_path = data.get("flag", "")
 	if flag_path != "":
-		flag_texture.texture = MapLoadHelper.load_flag_texture(flag_path)
+		flag_texture.texture = MapLoadHelper.load_texture(flag_path)
 	else:
 		flag_texture.texture = null
 
@@ -56,11 +57,11 @@ func _on_pick_flag_button_pressed() -> void:
 
 func _on_flag_file_selected(path: String) -> void:
 	flag_path = path
-	flag_texture.texture = MapLoadHelper.load_flag_texture(path)
+	flag_texture.texture = MapLoadHelper.load_texture(path)
 
 
 func _on_pick_color_button_pressed() -> void:
-	color_picker.visible = not color_picker.visible
+	color_popup.popup_centered()
 
 
 func _on_color_changed(color: Color) -> void:

@@ -302,6 +302,7 @@ func initMapData():
 	var map := MapLoadHelper.instantiate_map()
 	$MapContainer.add_child(map)
 	MapLoadHelper.init_faction_tiles(map.get_node("FactionControl"), Global.mapFactionEntries)
+	MapLoadHelper.init_unit_tiles(map.get_node("CombatUnitInit"), Global.mapUnitEntries)
 	MapLoadHelper.apply_map_data(map, Global.mapEntries)
 	for cell in $MapContainer/Map/Terrain.get_used_cells():
 		var cellData = CellData.new()

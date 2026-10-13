@@ -7,6 +7,7 @@ var humanPlayers:Dictionary = {}
 var mapDir:String
 var mapEntries:Array = []
 var mapFactionEntries:Array[Dictionary] = []
+var mapUnitEntries:Array[Dictionary] = []
 var mapUnitsIncId = 0
 var hgh:HGH
 var mapData:Dictionary
@@ -75,28 +76,8 @@ func setupTerrain():
 	terrain["NONE"] = TerrainData.new(".", ".", 0)
 	
 func setupUnitTypes(dir:String) -> void:
-	var unitsPath = dir.path_join("units.json")
-	if not FileAccess.file_exists(unitsPath):
-		print("Could not open units file. Reverting to default units.")
-		unitsPath = "res://maps/common_data/units.json"
-	var file = FileAccess.open(unitsPath, FileAccess.READ)
-
-	var json_string = file.get_as_text()
-	file.close()
-
-	var json = JSON.new()
-	var parse_result = json.parse(json_string)
-	if (parse_result != OK):
-		print("Error parsing JSON: ", json.get_error_message())
-		return
-
-	for key in json.data.keys():
-		var unit_data = json.data[key]
-
-		# TODO: custom unit textures from the map folder are pending map-editor support
-		var texturePath = "res://maps/common_data/assets/units/%s" % unit_data.texture
-
-		unitTypes[key] = UnitType.new(texturePath, key, unit_data.hp, unit_data.advantageVersus, unit_data.movement, unit_data.uiName)
+	mapUnitEntries = MapLoadHelper.load_unit_definitions(dir)
+	unitTypes = MapLoadHelper.create_unit_types(mapUnitEntries)
 
 func setupFactionControl(factionControlModes:Dictionary):
 	humanPlayers = {}
@@ -153,7 +134,7 @@ func cellAroundImportantTile(cell:Vector2i):
 
 func getReinforcementCount():
 	var faction:Faction = factions[currentPlayer]
-	return floor(faction.importantTiles.size()/2.0) + 3
+	return floor(1.5 * log(numImportantTiles * faction.importantTiles.size()))
 
 func destroyUnit(cell:Vector2i):
 	if mapData[cell].unit != null:

@@ -3,8 +3,13 @@ extends Object
 class_name MapLoadHelper
 
 const MAP_TEMPLATE = preload("res://util/map_template.tscn")
+const COMMON_DATA_DIR = "res://common_data"
+const UNIT_TEXTURE_DIR = COMMON_DATA_DIR + "/assets/units"
 const FACTION_SOURCE_ID = 1
 const FACTION_COORDS = Vector2i(0, 0)
+const UNIT_COORDS = Vector2i(0, 0)
+const MAP_UNIT_TEXTURE_FOLDER = "units"
+const FALLBACK_TEXTURE = "res://icon.svg"
 
 static func read_json(path: String) -> Variant:
 	if not FileAccess.file_exists(path):
@@ -125,12 +130,14 @@ static func create_faction_info_from_faction_data(faction_data: Array[Dictionary
 		faction.id = faction_data_item.alt_id
 		faction.fullName = faction_data_item.name
 		faction.color = faction_data_item.color
-		faction.flag = load_flag_texture(faction_data_item.flag)
+		faction.flag = load_texture(faction_data_item.flag)
 		factionInfo[faction.id] = faction
 	return factionInfo
 
-static func load_flag_texture(path: String) -> Texture2D:
+static func load_texture(path: String) -> Texture2D:
 	var texture: Texture2D = null
+	if path.is_empty():
+		return null
 	if path.begins_with("res://"):
 		texture = load(path) as Texture2D
 	else:
@@ -167,3 +174,166 @@ static func build_special_names_data(names: Dictionary[Vector2i, String]) -> Dic
 	for cell in names:
 		data["%d,%d" % [cell.x, cell.y]] = names[cell]
 	return data
+
+# Each unit definition: { "id": int, "name": String, "ui_name": String, "hp": int, "movement": int,
+#   "texture": String (full path), "advantage_ids": Array[int] }
+# "id" is the unit's tile source id on the CombatUnitInit layer, which is what mapdata.json stores.
+
+# Loads the map's units.json, falling back to the default unit definitions in common_data
+static func load_unit_definitions(dir: String) -> Array[Dictionary]:
+	var path := dir.path_join("units.json")
+	if dir.is_empty() or not FileAccess.file_exists(path):
+		print("No units file in map folder. Using default units.")
+		return default_unit_definitions()
+	return parse_unit_data(read_json(path), dir.path_join(MAP_UNIT_TEXTURE_FOLDER))
+
+static func default_unit_definitions() -> Array[Dictionary]:
+	return parse_unit_data(read_json(COMMON_DATA_DIR.path_join("units.json")), UNIT_TEXTURE_DIR)
+
+static func parse_unit_data(data: Variant, texture_dir: String) -> Array[Dictionary]:
+	var units: Array[Dictionary] = []
+	if not (data is Dictionary):
+		push_error("Invalid unit data")
+		return units
+	# Units without an id get one after the highest existing id, in file order
+	var next_id := 0
+	for key in data:
+		next_id = maxi(next_id, int(data[key].get("id", -1)) + 1)
+	var ids_by_name := {}
+	for key in data:
+		var entry: Dictionary = data[key]
+		var id: int
+		if entry.has("id"):
+			id = int(entry["id"])
+		else:
+			id = next_id
+			next_id += 1
+		ids_by_name[key] = id
+		var texture_file: String = entry.get("texture", "")
+		units.append({
+			"id": id,
+			"name": key,
+			"ui_name": entry.get("uiName", key),
+			"hp": int(entry.get("hp", 100)),
+			"movement": int(entry.get("movement", 1)),
+			"texture": texture_dir.path_join(texture_file) if not texture_file.is_empty() else "",
+			"advantage_ids": [] as Array[int],
+		})
+	for unit in units:
+		for other_name in data[unit["name"]].get("advantageVersus", []):
+			if ids_by_name.has(other_name):
+				unit["advantage_ids"].append(ids_by_name[other_name])
+	# JSON object order isn't preserved through saving, so keep units in id order
+	units.sort_custom(func(a, b): return a["id"] < b["id"])
+	return units
+
+# Builds the units.json contents. texture_files maps unit id -> file name inside the map's units folder.
+static func build_unit_data(units: Array[Dictionary], texture_files: Dictionary) -> Dictionary:
+	var names_by_id := {}
+	for unit in units:
+		names_by_id[unit["id"]] = unit["name"]
+	var data := {}
+	for unit in units:
+		var advantage_versus := []
+		for other_id in unit["advantage_ids"]:
+			if names_by_id.has(other_id):
+				advantage_versus.append(names_by_id[other_id])
+		data[unit["name"]] = {
+			"id": unit["id"],
+			"uiName": unit["ui_name"],
+			"movement": unit["movement"],
+			"texture": texture_files.get(unit["id"], ""),
+			"hp": unit["hp"],
+			"advantageVersus": advantage_versus,
+		}
+	return data
+
+static func create_unit_types(units: Array[Dictionary]) -> Dictionary[String, UnitType]:
+	var names_by_id := {}
+	for unit in units:
+		names_by_id[unit["id"]] = unit["name"]
+	var unit_types: Dictionary[String, UnitType] = {}
+	for unit in units:
+		var advantage_versus: Array[String] = []
+		for other_id in unit["advantage_ids"]:
+			if names_by_id.has(other_id):
+				advantage_versus.append(names_by_id[other_id])
+		unit_types[unit["name"]] = UnitType.new(load_unit_texture(unit["texture"]), unit["name"], unit["hp"], advantage_versus, unit["movement"], unit["ui_name"])
+	return unit_types
+
+static func load_unit_texture(path: String) -> Texture2D:
+	var texture := load_texture(path)
+	return texture if texture != null else load(FALLBACK_TEXTURE) as Texture2D
+
+# Rebuilds the unit layer's tile set so there is one atlas source per unit, using the unit id as the source id.
+# Cells using a source that no longer has a unit are erased.
+static func init_unit_tiles(unit_layer: TileMapLayer, units: Array[Dictionary]) -> void:
+	var tile_set := unit_layer.tile_set
+	var valid_ids := {}
+	for unit in units:
+		var id: int = unit["id"]
+		valid_ids[id] = true
+		var texture := load_unit_texture(unit["texture"])
+		var atlas: TileSetAtlasSource
+		if tile_set.has_source(id):
+			atlas = tile_set.get_source(id) as TileSetAtlasSource
+		else:
+			atlas = TileSetAtlasSource.new()
+			tile_set.add_source(atlas, id)
+		atlas.texture_region_size = Vector2i(texture.get_size())
+		atlas.texture = texture
+		if not atlas.has_tile(UNIT_COORDS):
+			atlas.create_tile(UNIT_COORDS)
+		atlas.get_tile_data(UNIT_COORDS, 0).set_custom_data("type", unit["name"])
+
+	var stale_ids: Array[int] = []
+	for i in tile_set.get_source_count():
+		var source_id := tile_set.get_source_id(i)
+		if not valid_ids.has(source_id):
+			stale_ids.append(source_id)
+	if stale_ids.is_empty():
+		return
+	for cell in unit_layer.get_used_cells():
+		if stale_ids.has(unit_layer.get_cell_source_id(cell)):
+			unit_layer.erase_cell(cell)
+	for source_id in stale_ids:
+		tile_set.remove_source(source_id)
+
+# Copies each source image into dest_dir and returns {id: file_name}.
+# sources maps an id (faction alt id, unit id) -> image path; empty paths are skipped.
+static func copy_image_files(sources: Dictionary, dest_dir: String) -> Dictionary:
+	var files := {}
+	var used_names := {}
+	for id in sources:
+		var src: String = sources[id]
+		if src.is_empty():
+			continue
+		var file_name := src.get_file()
+		if used_names.has(file_name):
+			file_name = "%d.png" % id
+		used_names[file_name] = true
+		var copied := _copy_image_file(src, dest_dir, file_name, id)
+		if not copied.is_empty():
+			files[id] = copied
+	return files
+
+static func _copy_image_file(src: String, dest_dir: String, file_name: String, id: int) -> String:
+	var dest := dest_dir.path_join(file_name)
+	var src_abs := ProjectSettings.globalize_path(src)
+	if src_abs.simplify_path() == dest.simplify_path():
+		return file_name
+	if FileAccess.file_exists(src) and DirAccess.copy_absolute(src_abs, dest) == OK:
+		return file_name
+	# res:// files may only exist as imported resources in exported builds, so re-save them from the loaded image
+	var fallback_name := "%d.png" % id
+	var image := _load_image(src)
+	if image == null or image.save_png(dest_dir.path_join(fallback_name)) != OK:
+		push_error("Could not save image %d from %s" % [id, src])
+		return ""
+	return fallback_name
+
+static func _load_image(src: String) -> Image:
+	if src.begins_with("res://"):
+		var texture := load(src) as Texture2D
+		return texture.get_image() if texture != null else null
+	return Image.load_from_file(src)

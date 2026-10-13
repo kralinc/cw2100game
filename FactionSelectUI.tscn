@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://dh6skd271xest"]
 
-[ext_resource type="Texture2D" uid="uid://lcrval3k4ohe" path="res://maps/common_data/assets/flags/greenflag.png" id="1_a3km3"]
+[ext_resource type="Texture2D" uid="uid://lcrval3k4ohe" path="res://common_data/assets/flags/greenflag.png" id="1_a3km3"]
 [ext_resource type="Script" uid="uid://bwkwiicnauarn" path="res://FactionSelectUI.gd" id="1_hemv2"]
 
 [node name="FactionSelectUI" type="MarginContainer"]

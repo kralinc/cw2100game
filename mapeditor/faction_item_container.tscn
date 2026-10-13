@@ -46,10 +46,6 @@ size_flags_horizontal = 3
 layout_mode = 2
 text = "Pick Color"
 
-[node name="ColorPicker" type="ColorPicker" parent="HBoxContainer/InfoContainer/ColorContainer" unique_id=1963491602]
-visible = false
-layout_mode = 2
-
 [node name="IDLabel" type="Label" parent="HBoxContainer/InfoContainer" unique_id=1371628381]
 layout_mode = 2
 text = "ID: 1"
@@ -57,3 +53,7 @@ text = "ID: 1"
 [node name="DeleteFactionButton" type="Button" parent="HBoxContainer" unique_id=1262837985]
 layout_mode = 2
 text = "DEL"
+
+[node name="ColorPopup" type="PopupPanel" parent="." unique_id=1520734816]
+
+[node name="ColorPicker" type="ColorPicker" parent="ColorPopup" unique_id=1963491602]

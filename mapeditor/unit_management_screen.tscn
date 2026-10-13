@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://mapeditor/unit_management_screen.gd" id="1_unit_screen"]
+
+[node name="UnitManagementScreen" type="MarginContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 0
+script = ExtResource("1_unit_screen")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="TopBarContainer" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/TopBarContainer"]
+layout_mode = 2
+
+[node name="UnitScreenCloseButton" type="Button" parent="VBoxContainer/TopBarContainer/HBoxContainer"]
+layout_mode = 2
+text = "X"
+
+[node name="AddUnitButton" type="Button" parent="VBoxContainer/TopBarContainer/HBoxContainer"]
+layout_mode = 2
+text = "Add Unit"
+
+[node name="UnitManagementContainer" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/UnitManagementContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="UnitListContainer" type="VBoxContainer" parent="VBoxContainer/UnitManagementContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
