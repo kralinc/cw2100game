@@ -25,6 +25,9 @@ var selectedUnit:Unit
 var selectedUnitRange:Dictionary
 var selectedUnitType:UnitType
 var reinforcementCount:int = 0
+var highlightDirty = true
+var currentHighlights:Dictionary = {} # Vector2i cell -> Vector2i(source, alternative) on the Highlight layer
+var pendingHighlights:Dictionary = {}
 @export var unitScene: PackedScene
 
 # Called when the node enters the scene tree for the first time.
@@ -40,14 +43,20 @@ func _ready():
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
-	getHoverPath()
-	doHighlight()
-
 	if (Input.is_action_pressed("next_turn")):
 		nextTurn()
 
+	if highlightDirty:
+		highlightDirty = false
+		getHoverPath()
+		doHighlight()
+
+# Highlights are only recalculated on frames where something that affects them has changed
+func queueHighlightRefresh():
+	highlightDirty = true
+
 func doHighlight():
-	$MapContainer/Map/Highlight.clear()
+	pendingHighlights = {}
 	if not Global.spectatorTurn:
 		highlightLostTiles()
 	if (clickedCell != null):
@@ -61,42 +70,56 @@ func doHighlight():
 		doHoverPathHighlight()
 	if inputMode == REINFORCEMENT_MODE:
 		highlightReinforcementPlacementRange(Global.factions[Global.currentPlayer])
-	$MapContainer/Map/Highlight.set_cell(hoveredCell, 0, Vector2(0,0))
+	setHighlight(hoveredCell, 0)
+	applyHighlights()
+
+# Later calls override earlier ones for the same cell, like set_cell would
+func setHighlight(cell:Vector2i, alternative:int, source:int = 0):
+	pendingHighlights[cell] = Vector2i(source, alternative)
+
+# Only touch the cells whose highlight differs from what is currently drawn
+func applyHighlights():
+	var highlightLayer:TileMapLayer = $MapContainer/Map/Highlight
+	for cell in currentHighlights:
+		if not pendingHighlights.has(cell):
+			highlightLayer.erase_cell(cell)
+	for cell in pendingHighlights:
+		var tile:Vector2i = pendingHighlights[cell]
+		if not currentHighlights.has(cell) or currentHighlights[cell] != tile:
+			highlightLayer.set_cell(cell, tile.x, Vector2i(0,0), tile.y)
+	currentHighlights = pendingHighlights
 
 func highlightLostTiles():
 	for tile in Global.factions[Global.currentPlayer].tilesLostLastTurn:
-		$MapContainer/Map/Highlight.set_cell(tile, 0, Vector2i(0,0), 4)
+		setHighlight(tile, 4)
 
 
 func doClickedHighlight(pos_clicked):
-	#if clickedCell != null:
-		#$MapContainer/Map/Highlight.set_cell(clickedCell, -1)
-	$MapContainer/Map/Highlight.set_cell(pos_clicked, 0, Vector2i(0,0), 1)
-	#clickedCell = pos_clicked
+	setHighlight(pos_clicked, 1)
 	
 func doPathHighlight(unit:Unit):
 	for cell in unit.movePath:
-		$MapContainer/Map/Highlight.set_cell(cell, 0, Vector2i(0,0), 3)
+		setHighlight(cell, 3)
 	
 func doHoverPathHighlight():
 	for cell in hoverPath:
-		$MapContainer/Map/Highlight.set_cell(cell, 1, Vector2i(0,0), 0)
+		setHighlight(cell, 0, 1)
 
 		
 func highlightMoveRange():
 	for cell in selectedUnitRange.keys():
 		if (Global.cellContainsEnemyUnit(cell) and $MapContainer/Map/FOW.get_cell_tile_data(cell) == null):
-			$MapContainer/Map/Highlight.set_cell(cell, 0, Vector2i(0,0), 2)
+			setHighlight(cell, 2)
 		else:
-			$MapContainer/Map/Highlight.set_cell(cell, 0, Vector2i(0,0), 1)
+			setHighlight(cell, 1)
 
 func highlightReinforcementPlacementRange(faction:Faction):
 	for cell in faction.importantTiles:
 		if Global.mapData[cell].unit == null:
-			$MapContainer/Map/Highlight.set_cell(cell, 0, Vector2i(0,0), 3)
+			setHighlight(cell, 3)
 		for neighbor in Global.hgh.getNeighbors(cell):
 			if Global.mapData[neighbor].unit == null and Global.mapData[neighbor].faction == Global.currentPlayer:
-				$MapContainer/Map/Highlight.set_cell(neighbor, 0, Vector2i(0,0), 3)
+				setHighlight(neighbor, 3)
 				
 				
 func highlightUnitMultiSelect():
@@ -423,6 +446,7 @@ func doAITurn():
 	nextTurn()
 
 func nextTurn():
+	queueHighlightRefresh()
 	nextTurnEndOfTurnActions()
 	nextTurnStartOfTurnActions()
 
@@ -590,12 +614,15 @@ func _input(event):
 				hover_data.emit(Global.getEmptyCell(pos_hovered))
 				combat_panel_data.emit(null)
 			hoveredCell = pos_hovered
+			queueHighlightRefresh()
 		if $SelectBox.visible:
 			$SelectBox.size = hoveredWorldPos - clickedWorldPos
 			determineUnitMultiSelect()
+			queueHighlightRefresh()
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.is_released() and $SelectBox.visible:
 			enableSelectedUnitMovement()
+			queueHighlightRefresh()
 			
 
 func _on_button_pressed() -> void:
@@ -603,10 +630,10 @@ func _on_button_pressed() -> void:
 
 func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx: int) -> void:
 	if event is InputEventMouseButton:
+		queueHighlightRefresh()
 		if event.button_index == MOUSE_BUTTON_LEFT and event.is_pressed():
 			clickedWorldPos = get_global_mouse_position()
 			$SelectBox.position = clickedWorldPos
-			$MapContainer/Map/Highlight.clear()
 			hoverPath = []
 			var global_clicked = get_global_mouse_position()
 			var pos_clicked = $MapContainer/Map/Terrain.local_to_map(global_clicked)

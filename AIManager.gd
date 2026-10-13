@@ -4,9 +4,9 @@ class_name AIManager
 
 enum taskTypes {
 	TAKE_IMPORTANT_TILE = 1,
-	DEFEND_TERRITORY = 3,
-	ATTACK_ENEMY = 2,
-	RETREAT = 4
+	DEFEND_TERRITORY = 4,
+	ATTACK_ENEMY = 3,
+	RETREAT = 2
 }
 
 
