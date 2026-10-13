@@ -6,10 +6,14 @@
 texture = ExtResource("1_44v54")
 texture_region_size = Vector2i(74, 64)
 0:0/0 = 0
+0:0/0/custom_data_0 = "forest"
 1:0/0 = 0
+1:0/0/custom_data_0 = "city"
 
 [resource]
 tile_shape = 3
 tile_offset_axis = 1
 tile_size = Vector2i(74, 64)
+custom_data_layer_0/name = "name"
+custom_data_layer_0/type = 4
 sources/0 = SubResource("TileSetAtlasSource_1occn")

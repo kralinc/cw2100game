@@ -2,7 +2,7 @@ extends Control
 
 const FactionSelectUI = preload("res://FactionSelectUI.tscn")
 
-var mapName:String
+
 var factions:Dictionary[int, Faction]
 var factionControlModes:Dictionary = {}
 var factionContainer:HBoxContainer
@@ -45,7 +45,10 @@ func onFactionControlOptionSelected(factionId:int, isHuman:bool) -> void:
 	factionControlModes[factionId] = isHuman
 
 func onStartButtonPressed() -> void:
-	Global.setupGameData(mapName, factionControlModes)
+	if map_dir.is_empty():
+		push_warning("No map folder selected.")
+		return
+	Global.setupGameData(map_dir, factionControlModes)
 	Global.spectatorMode = false
 	get_tree().change_scene_to_file("res://root.tscn")
 

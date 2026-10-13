@@ -4,14 +4,16 @@ signal take_enemy_territory(cell:Vector2i)
 
 var humanPlayers:Dictionary = {}
 
-var mapScene:PackedScene
+var mapDir:String
+var mapEntries:Array = []
+var mapFactionEntries:Array[Dictionary] = []
 var mapUnitsIncId = 0
 var hgh:HGH
 var mapData:Dictionary
 var mapUnits:Dictionary
 var factions:Dictionary
 var factionsList:Array = [] # for turn-taking
-var terrain:Dictionary
+var terrain:Dictionary[String, TerrainData]
 var unitTypes:Dictionary
 var currentPlayer:int = 1
 var currentPlayerIterator:int = 0
@@ -32,19 +34,19 @@ var interactionState:String
 func _ready() -> void:
 	return
 
-func setupGameData(mapName, factionControlModes:Dictionary):
-	setupMap(mapName)
-	factions = setupFactions(mapName)
+func setupGameData(dir:String, factionControlModes:Dictionary):
+	setupMap(dir)
+	factions = setupFactions(dir)
 	setupTerrain()
-	setupUnitTypes(mapName)
-	setupSpecialNames(mapName)
+	setupUnitTypes(dir)
+	setupSpecialNames(dir)
 	setupFactionControl(factionControlModes)
 
-func setupMap(mapName:String):
-	var mapNameAsset = "res://maps/%s/%s.tscn" % [mapName, mapName]
-	mapScene = load(mapNameAsset)
+func setupMap(dir:String):
+	mapDir = dir
+	mapEntries = MapLoadHelper.load_map_data(dir)
 
-func setupFactions(mapName:String) ->  Dictionary:
+func setupFactions(dir:String) -> Dictionary:
 	var factionsDict:Dictionary = {}
 	var neutral = Faction.new()
 	neutral.fullName = "Neutral"
@@ -52,47 +54,32 @@ func setupFactions(mapName:String) ->  Dictionary:
 	neutral.flag = load("res://icon.svg")
 	factionsDict[0] = neutral
 
-	var file = FileAccess.open("res://maps/%s/factions.json" % [mapName], FileAccess.READ)
-	if not file:
-		print("Could not open factions file. Reverting to default factions.")
-		file = FileAccess.open("res://maps/common_data/factions.json", FileAccess.READ)
-	var json_string = file.get_as_text()
-	file.close()
-
-	var json = JSON.new()
-	var parse_result = json.parse(json_string)
-	if (parse_result != OK):
-		print("Error parsing JSON: ", json.get_error_message())
-		return factionsDict
-
-	for i in range(json.data.size()):
-		var faction_data = json.data[i]
-		var faction = Faction.new()
-		faction.id = faction_data.id
-		faction.fullName = faction_data.fullName
-		faction.color = Color(faction_data.color[0], faction_data.color[1], faction_data.color[2])
-		if FileAccess.file_exists("res://maps/%s/assets/flags/%s" % [mapName, faction_data.flag]):
-			faction.flag = load("res://maps/%s/assets/flags/%s" % [mapName, faction_data.flag])
-		else:
-			faction.flag = load("res://maps/common_data/assets/flags/%s" % faction_data.flag)
-		factionsDict[i + 1] = faction  # Start IDs at 1 instead of 0 due to hardcoded neutral faction
+	mapFactionEntries = MapLoadHelper.parse_faction_data(dir)
+	var mapFactions:Dictionary[int, Faction] = MapLoadHelper.create_faction_info_from_faction_data(mapFactionEntries)
+	for factionId in mapFactions:
+		var faction:Faction = mapFactions[factionId]
+		if faction.flag == null:
+			faction.flag = load("res://icon.svg")
+		factionsDict[factionId] = faction
 	return factionsDict
 	
 
 func setupTerrain():
-	terrain["plains"] = TerrainData.new("plains", "Plains", 1)
-	terrain["hills"] = TerrainData.new("hills", "Hills", 2)
+	terrain["grass"] = TerrainData.new("grass", "Plains", 1)
+	terrain["mountain"] = TerrainData.new("mountain", "Hills", 2)
 	terrain["desert"] = TerrainData.new("desert", "Desert", 1)
 	terrain["city"] = TerrainData.new("city", "City", 0)
 	terrain["forest"] = TerrainData.new("forest", "Forest", 2)
 	terrain["water"] = TerrainData.new("water", "Water", 3)
+	terrain["snow"] = TerrainData.new("snow", "Snow", 2)
 	terrain["NONE"] = TerrainData.new(".", ".", 0)
 	
-func setupUnitTypes(mapName:String) -> void:
-	var file = FileAccess.open("res://maps/%s/units.json" % [mapName], FileAccess.READ)
-	if not file:
+func setupUnitTypes(dir:String) -> void:
+	var unitsPath = dir.path_join("units.json")
+	if not FileAccess.file_exists(unitsPath):
 		print("Could not open units file. Reverting to default units.")
-		file = FileAccess.open("res://maps/common_data/units.json", FileAccess.READ)
+		unitsPath = "res://maps/common_data/units.json"
+	var file = FileAccess.open(unitsPath, FileAccess.READ)
 
 	var json_string = file.get_as_text()
 	file.close()
@@ -106,11 +93,8 @@ func setupUnitTypes(mapName:String) -> void:
 	for key in json.data.keys():
 		var unit_data = json.data[key]
 
-		var texturePath = ""
-		if FileAccess.file_exists("res://maps/%s/assets/units/%s" % [mapName, unit_data.texture]):
-			texturePath = "res://maps/%s/assets/units/%s" % [mapName, unit_data.texture]
-		else:
-			texturePath = "res://maps/common_data/assets/units/%s" % unit_data.texture
+		# TODO: custom unit textures from the map folder are pending map-editor support
+		var texturePath = "res://maps/common_data/assets/units/%s" % unit_data.texture
 
 		unitTypes[key] = UnitType.new(texturePath, key, unit_data.hp, unit_data.advantageVersus, unit_data.movement, unit_data.uiName)
 
@@ -142,8 +126,8 @@ func processDeaths(combatResult:CombatResult) -> void:
 	if (combatResult.defenderDead):
 		destroyUnit(combatResult.defenderCell.pos)
 
-func setupSpecialNames(mapName:String) -> void:
-	var file = FileAccess.open("res://maps/%s/specialnames.json" % [mapName], FileAccess.READ)
+func setupSpecialNames(dir:String) -> void:
+	var file = FileAccess.open(dir.path_join("specialnames.json"), FileAccess.READ)
 	if not file:
 		print("Could not open special names file.")
 		return

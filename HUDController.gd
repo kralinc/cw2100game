@@ -17,10 +17,10 @@ func setUnitInfo(unit:Unit) -> void:
 		$UnitInfo/MovementLabel.text = "Movement: %s" % unit.movePoints
 
 func setPlayerInfo() -> void:
-	$TopPanel/NameLabel.text = Global.factions[Global.currentPlayer].fullName
-	$TopPanel/Flag.texture = Global.factions[Global.currentPlayer].flag
-	$TopPanel/TurnLabel.text = "Turn: %d" % (Global.turn)
-	$TopPanel/TurnsUntilReinforceLabel.text = "Turns until reinforcement: %d" % Global.turnsUntilReinforcement
+	$PanelContainer/TopPanel/NameLabel.text = Global.factions[Global.currentPlayer].fullName
+	$PanelContainer/TopPanel/Flag.texture = Global.factions[Global.currentPlayer].flag
+	$PanelContainer/TopPanel/TurnLabel.text = "Turn: %d" % (Global.turn)
+	$PanelContainer/TopPanel/TurnsUntilReinforceLabel.text = "Turns until reinforcement: %d" % Global.turnsUntilReinforcement
 	updateTopPanel()
 
 func setHealthBar(bar:ProgressBar, value:float):

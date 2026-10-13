@@ -283,8 +283,10 @@ func initHighlightCells():
 			print("Failed to create alternative tile for color: ", color)
 
 func initMapData():
-	var scene = Global.mapScene.instantiate()
-	$MapContainer.add_child(scene)
+	var map := MapLoadHelper.instantiate_map()
+	$MapContainer.add_child(map)
+	MapLoadHelper.init_faction_tiles(map.get_node("FactionControl"), Global.mapFactionEntries)
+	MapLoadHelper.apply_map_data(map, Global.mapEntries)
 	for cell in $MapContainer/Map/Terrain.get_used_cells():
 		var cellData = CellData.new()
 		cellData.pos = cell
@@ -327,7 +329,8 @@ func getFactionAtPos(pos):
 	
 func getTerrainAtPos(pos):
 	var tileData = $MapContainer/Map/Terrain.get_cell_tile_data(pos)
-	return Global.terrain["NONE"] if tileData == null else Global.terrain[tileData.get_custom_data("name")]
+	var tileType = tileData.get_custom_data("name")
+	return Global.terrain["NONE"] if tileData == null else Global.terrain[tileType]
 	
 func getFeatureAtPos(pos):
 	var tileData = $MapContainer/Map/Features.get_cell_tile_data(pos)

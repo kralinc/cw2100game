@@ -1,0 +1,140 @@
+[gd_scene format=3 uid="uid://dafj20oibctyy"]
+
+[ext_resource type="TileSet" uid="uid://c13d0lpej0bwi" path="res://terrain_tile_set.tres" id="2_8rk8m"]
+[ext_resource type="Texture2D" uid="uid://bknh2u8xwctne" path="res://assets/hex_white.png" id="5_3w6ib"]
+[ext_resource type="TileSet" uid="uid://cn2uikq0sjt60" path="res://features_tile_set.tres" id="6_qjj3h"]
+[ext_resource type="Texture2D" uid="uid://bn1y5f27it6u8" path="res://maps/common_data/assets/units/soldier.png" id="6_rymr0"]
+[ext_resource type="Texture2D" uid="uid://54pivf6vx4mw" path="res://maps/common_data/assets/units/tank.png" id="7_3x18o"]
+[ext_resource type="Texture2D" uid="uid://jxfqm5qawyd0" path="res://maps/common_data/assets/units/artillery.png" id="8_a2g5v"]
+[ext_resource type="Texture2D" uid="uid://culy7o1ud8tlj" path="res://assets/hex_important.png" id="9_0ic42"]
+[ext_resource type="Shader" uid="uid://cd8ue8fnd0w2f" path="res://hex_outline.gdshader" id="10_epbip"]
+[ext_resource type="Texture2D" uid="uid://dnvql35w81c5r" path="res://assets/hex_highlight.png" id="11_17mym"]
+[ext_resource type="Texture2D" uid="uid://c17bukt8sdv44" path="res://assets/dot.png" id="12_xkr8w"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3m4cy"]
+texture = ExtResource("5_3w6ib")
+texture_region_size = Vector2i(74, 64)
+0:0/next_alternative_id = 7
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_pxv74"]
+resource_local_to_scene = true
+tile_shape = 3
+tile_offset_axis = 1
+tile_size = Vector2i(74, 64)
+custom_data_layer_0/name = "factionId"
+custom_data_layer_0/type = 2
+sources/1 = SubResource("TileSetAtlasSource_3m4cy")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_20xwc"]
+texture = ExtResource("6_rymr0")
+texture_region_size = Vector2i(74, 64)
+0:0/0 = 0
+0:0/0/custom_data_0 = "infantry"
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6ts8j"]
+texture = ExtResource("7_3x18o")
+texture_region_size = Vector2i(74, 64)
+0:0/0 = 0
+0:0/0/custom_data_0 = "tank"
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wsj8n"]
+texture = ExtResource("8_a2g5v")
+texture_region_size = Vector2i(74, 64)
+0:0/0 = 0
+0:0/0/custom_data_0 = "artillery"
+
+[sub_resource type="TileSet" id="TileSet_51jhr"]
+resource_local_to_scene = true
+tile_shape = 3
+tile_offset_axis = 1
+tile_size = Vector2i(74, 64)
+custom_data_layer_0/name = "type"
+custom_data_layer_0/type = 4
+sources/0 = SubResource("TileSetAtlasSource_20xwc")
+sources/1 = SubResource("TileSetAtlasSource_6ts8j")
+sources/2 = SubResource("TileSetAtlasSource_wsj8n")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6jlhu"]
+texture = ExtResource("5_3w6ib")
+texture_region_size = Vector2i(74, 64)
+0:0/0 = 0
+0:0/0/modulate = Color(0, 0, 0, 0.666667)
+
+[sub_resource type="TileSet" id="TileSet_rvryj"]
+resource_local_to_scene = true
+tile_shape = 3
+tile_offset_axis = 1
+tile_size = Vector2i(74, 64)
+sources/0 = SubResource("TileSetAtlasSource_6jlhu")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xalul"]
+texture = ExtResource("9_0ic42")
+texture_region_size = Vector2i(74, 64)
+0:0/0 = 0
+0:0/0/z_index = 5
+
+[sub_resource type="TileSet" id="TileSet_ljp3e"]
+resource_local_to_scene = true
+tile_shape = 3
+tile_offset_axis = 1
+tile_size = Vector2i(74, 64)
+sources/0 = SubResource("TileSetAtlasSource_xalul")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_36t0s"]
+shader = ExtResource("10_epbip")
+shader_parameter/hexagon_texture = ExtResource("11_17mym")
+shader_parameter/outline_color = Vector4(0, 0, 0, 1)
+shader_parameter/outline_thickness = 1.0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dibjm"]
+texture = ExtResource("11_17mym")
+texture_region_size = Vector2i(74, 64)
+0:0/next_alternative_id = 4
+0:0/0 = 0
+0:0/0/material = SubResource("ShaderMaterial_36t0s")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5tnxs"]
+texture = ExtResource("12_xkr8w")
+texture_region_size = Vector2i(74, 64)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_ngj20"]
+resource_local_to_scene = true
+tile_shape = 3
+tile_offset_axis = 1
+tile_size = Vector2i(74, 64)
+sources/0 = SubResource("TileSetAtlasSource_dibjm")
+sources/1 = SubResource("TileSetAtlasSource_5tnxs")
+
+[node name="Map" type="Node2D" unique_id=1974661774]
+
+[node name="Terrain" type="TileMapLayer" parent="." unique_id=878238878]
+use_parent_material = true
+tile_set = ExtResource("2_8rk8m")
+rendering_quadrant_size = 256
+
+[node name="Features" type="TileMapLayer" parent="." unique_id=1017442356]
+modulate = Color(0.905882, 1, 1, 1)
+use_parent_material = true
+tile_set = ExtResource("6_qjj3h")
+rendering_quadrant_size = 64
+
+[node name="FactionControl" type="TileMapLayer" parent="." unique_id=742343079]
+modulate = Color(1, 1, 1, 0.392157)
+tile_set = SubResource("TileSet_pxv74")
+rendering_quadrant_size = 64
+
+[node name="CombatUnitInit" type="TileMapLayer" parent="." unique_id=1700821200]
+tile_set = SubResource("TileSet_51jhr")
+
+[node name="FOW" type="TileMapLayer" parent="." unique_id=362023828]
+tile_set = SubResource("TileSet_rvryj")
+rendering_quadrant_size = 128
+
+[node name="Important" type="TileMapLayer" parent="." unique_id=712529197]
+tile_set = SubResource("TileSet_ljp3e")
+
+[node name="Highlight" type="TileMapLayer" parent="." unique_id=614871930]
+z_index = 5
+tile_set = SubResource("TileSet_ngj20")

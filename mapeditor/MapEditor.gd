@@ -1,8 +1,7 @@
 extends Control
 
 const PAINTABLE_LAYERS = ["Terrain", "Features", "FactionControl", "CombatUnitInit", "Important"]
-const FACTION_SOURCE_ID = 1
-const FACTION_COORDS = Vector2i(0, 0)
+
 # TEMPORARY: placeholder map folder name. Replace with user input later.
 const PROJECT_NAME = "test"
 
@@ -40,9 +39,9 @@ func _ready() -> void:
 	faction_screen.factions_saved.connect(_on_factions_saved)
 	save_button.pressed.connect(_on_save_pressed)
 	load_button.pressed.connect(_on_load_pressed)
-	save_dialog = _create_dir_dialog("Choose save location")
+	save_dialog = MapLoadHelper.create_dir_dialog("Choose save location", self)
 	save_dialog.dir_selected.connect(_on_save_dir_selected)
-	load_dialog = _create_dir_dialog("Open map folder")
+	load_dialog = MapLoadHelper.create_dir_dialog("Open map folder", self)
 	load_dialog.dir_selected.connect(_load_from)
 
 
@@ -55,33 +54,7 @@ func _init_default_factions() -> void:
 
 
 func _init_faction_tiles() -> void:
-	var faction_layer: TileMapLayer = map.get_node("FactionControl")
-	var atlas := faction_layer.tile_set.get_source(FACTION_SOURCE_ID) as TileSetAtlasSource
-	var valid_ids: Array[int] = [0]
-	for faction in factions:
-		var alt_id: int = faction["alt_id"]
-		valid_ids.append(alt_id)
-		if not atlas.has_alternative_tile(FACTION_COORDS, alt_id):
-			atlas.create_alternative_tile(FACTION_COORDS, alt_id)
-		var data := atlas.get_tile_data(FACTION_COORDS, alt_id)
-		data.modulate = faction["color"]
-		data.set_custom_data("factionId", alt_id)
-
-	var stale_ids: Array[int] = []
-	for i in atlas.get_alternative_tiles_count(FACTION_COORDS):
-		var alt := atlas.get_alternative_tile_id(FACTION_COORDS, i)
-		if not valid_ids.has(alt):
-			stale_ids.append(alt)
-	if stale_ids.is_empty():
-		return
-
-	for cell in faction_layer.get_used_cells():
-		if faction_layer.get_cell_source_id(cell) == FACTION_SOURCE_ID \
-				and faction_layer.get_cell_atlas_coords(cell) == FACTION_COORDS \
-				and stale_ids.has(faction_layer.get_cell_alternative_tile(cell)):
-			faction_layer.erase_cell(cell)
-	for alt in stale_ids:
-		atlas.remove_alternative_tile(FACTION_COORDS, alt)
+	MapLoadHelper.init_faction_tiles(map.get_node("FactionControl"), factions)
 
 
 func _get_faction_by_alt(alt_id: int) -> Dictionary:
@@ -236,15 +209,6 @@ func _on_cancel_back_button_pressed() -> void:
 	camera.disable_camera = false
 
 
-func _create_dir_dialog(title: String) -> FileDialog:
-	var dialog := FileDialog.new()
-	dialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
-	dialog.access = FileDialog.ACCESS_FILESYSTEM
-	dialog.use_native_dialog = true
-	dialog.title = title
-	add_child(dialog)
-	return dialog
-
 
 func _set_dirty(value: bool) -> void:
 	dirty = value
@@ -273,7 +237,7 @@ func _save_to(dir: String) -> bool:
 		push_error("Could not create save folder: %s" % flags_dir)
 		return false
 	var flag_files := _copy_flags(flags_dir)
-	if not _write_json(dir.path_join("mapdata.json"), _build_map_data()):
+	if not _write_json(dir.path_join("mapdata.json"), MapLoadHelper.build_map_data(map)):
 		return false
 	if not _write_json(dir.path_join("factiondata.json"), _build_faction_data(flag_files)):
 		return false
@@ -290,25 +254,6 @@ func _write_json(path: String, data: Variant) -> bool:
 	file.store_string(JSON.stringify(data, "\t"))
 	return true
 
-
-func _build_map_data() -> Array:
-	var terrain: TileMapLayer = map.get_node("Terrain")
-	var features: TileMapLayer = map.get_node("Features")
-	var important: TileMapLayer = map.get_node("Important")
-	var units: TileMapLayer = map.get_node("CombatUnitInit")
-	var factions_layer: TileMapLayer = map.get_node("FactionControl")
-	var data := []
-	for cell in terrain.get_used_cells():
-		data.append({
-			"x": cell.x,
-			"y": cell.y,
-			"terrain": terrain.get_cell_atlas_coords(cell).x,
-			"features": features.get_cell_atlas_coords(cell).x if features.get_cell_source_id(cell) != -1 else -1,
-			"important": important.get_cell_source_id(cell) != -1,
-			"unit": units.get_cell_source_id(cell),
-			"faction": factions_layer.get_cell_alternative_tile(cell) if factions_layer.get_cell_source_id(cell) != -1 else -1,
-		})
-	return data
 
 
 func _build_faction_data(flag_files: Dictionary) -> Array:
@@ -372,14 +317,13 @@ func _update_flag_paths(flags_dir: String, flag_files: Dictionary) -> void:
 
 func _load_from(dir: String) -> void:
 	factions.clear()
-	var map_data = MapLoadHelper.read_json(dir.path_join("mapdata.json"))
-	if not (map_data is Array):
-		push_error("Map folder is missing or has invalid data: %s" % dir)
+	var map_data := MapLoadHelper.load_map_data(dir)
+	if map_data.is_empty():
 		return
 	factions = MapLoadHelper.parse_faction_data(dir)
 	_clear_map()
 	_init_faction_tiles()
-	_apply_map_data(map_data)
+	MapLoadHelper.apply_map_data(map, map_data)
 	save_path = dir
 	_set_dirty(false)
 	_build_tile_list(current_layer)
@@ -390,23 +334,3 @@ func _clear_map() -> void:
 		var layer: TileMapLayer = map.get_node(layer_name)
 		layer.clear()
 
-func _apply_map_data(entries: Array) -> void:
-	var terrain: TileMapLayer = map.get_node("Terrain")
-	var features: TileMapLayer = map.get_node("Features")
-	var important: TileMapLayer = map.get_node("Important")
-	var units: TileMapLayer = map.get_node("CombatUnitInit")
-	var factions_layer: TileMapLayer = map.get_node("FactionControl")
-	for entry in entries:
-		var cell := Vector2i(int(entry["x"]), int(entry["y"]))
-		terrain.set_cell(cell, 0, Vector2i(int(entry["terrain"]), 0), 0)
-		var features_x := int(entry["features"])
-		if features_x != -1:
-			features.set_cell(cell, 0, Vector2i(features_x, 0), 0)
-		if entry["important"]:
-			important.set_cell(cell, 0, Vector2i.ZERO, 0)
-		var unit := int(entry["unit"])
-		if unit != -1:
-			units.set_cell(cell, unit, Vector2i.ZERO, 0)
-		var faction_alt := int(entry["faction"])
-		if faction_alt != -1:
-			factions_layer.set_cell(cell, FACTION_SOURCE_ID, FACTION_COORDS, faction_alt)
