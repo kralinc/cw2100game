@@ -31,6 +31,13 @@ var turnsUntilReinforcement = 10
 var reinforcementModeCounter = 0
 var interactionState:String
 
+# Tile ownership changes for the replay. One inner array per turn, each holding
+# {"x": int, "y": int, "faction": int} entries in the order the changes happened.
+# (GDScript can't nest typed arrays, so this is really Array[Array[Dictionary]])
+var replayOwnershipDiffs:Array[Array] = []
+var replayInitialOwnership:Dictionary = {} # Vector2i cell -> faction id at the start of the game
+var replayTileSize:Vector2 = Vector2.ZERO
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	return
@@ -60,6 +67,13 @@ func resetGameState():
 	intraTurnCounter = 0
 	turnsUntilReinforcement = 10
 	reinforcementModeCounter = 0
+	replayOwnershipDiffs = []
+	replayInitialOwnership = {}
+
+func recordOwnershipChange(cell:Vector2i, toFaction:int):
+	while replayOwnershipDiffs.size() < turn:
+		replayOwnershipDiffs.append([])
+	replayOwnershipDiffs[turn - 1].append({"x": cell.x, "y": cell.y, "faction": toFaction})
 
 func setupMap(dir:String):
 	mapDir = dir

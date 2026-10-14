@@ -36,6 +36,7 @@ func _ready():
 	initMapData()
 	initHighlightCells()
 	initFactionControl()
+	initReplay()
 	initPathfinding()
 	initUnits()
 	$HUD/GameEndScreen.spectate_pressed.connect(_on_game_end_screen_spectate_pressed)
@@ -231,6 +232,7 @@ func captureCell(cellId:Vector2i, toFaction:int) -> void:
 		Global.factions[mapCell.faction].tilesLostLastTurn[mapCell.pos] = true
 		Global.factions[toFaction].controlledTiles[mapCell.pos] = true
 		Global.factions[mapCell.faction].controlledTiles.erase(mapCell.pos)
+		Global.recordOwnershipChange(cellId, toFaction)
 	mapCell.faction = toFaction
 	$MapContainer/Map/FactionControl.set_cell(cellId, 1, Vector2i(0,0), toFaction)
 	$MapContainer/Map/FOW.set_cell(cellId, -1)
@@ -341,7 +343,13 @@ func initFactionControl():
 		if (faction.importantTiles.size() > 0):
 			Global.factionsList.append(factionId)
 
-			
+
+# Snapshot the starting ownership so the replay has a first frame to apply diffs to
+func initReplay():
+	Global.replayTileSize = $MapContainer/Map/Terrain.tile_set.tile_size
+	for cell in Global.mapData:
+		Global.replayInitialOwnership[cell] = Global.mapData[cell].faction
+
 func getFactionAtPos(pos):
 	var tileData = $MapContainer/Map/FactionControl.get_cell_tile_data(pos)
 	return 0 if tileData == null else tileData.get_custom_data("factionId")
@@ -559,6 +567,7 @@ func removeFaction():
 	for tile in Global.mapData.keys():
 		if Global.mapData[tile].faction == Global.currentPlayer:
 			Global.mapData[tile].faction = 0
+			Global.recordOwnershipChange(tile, 0)
 			$MapContainer/Map/FactionControl.set_cell(tile, -1)
 	# Remove faction from the list and step the turn iterator back so the next faction isn't skipped
 	var removedIndex = Global.factionsList.find(Global.currentPlayer)

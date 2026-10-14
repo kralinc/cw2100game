@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://b381i8kbjg7kp" path="res://GameEndScreen.gd" id="0_ges"]
 [ext_resource type="Texture2D" uid="uid://ca2eygog0jy3n" path="res://assets/otherflagtest.png" id="1_v4k5j"]
 [ext_resource type="LabelSettings" uid="uid://6h8xqvekfw2d" path="res://game_end_screen_label_settings.tres" id="2_5othp"]
+[ext_resource type="Script" uid="uid://cxtwfye85th8w" path="res://ReplayView.gd" id="3_rpl"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_0hxld"]
 font_size = 40
@@ -59,6 +60,7 @@ text = "Main Menu"
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1182573335]
 layout_mode = 2
+size_flags_vertical = 3
 
 [node name="InfoContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1150884548]
 layout_mode = 2
@@ -103,18 +105,29 @@ theme_override_constants/margin_bottom = 5
 layout_mode = 2
 
 [node name="ReplayTexture" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer" unique_id=1641767389]
+unique_name_in_owner = true
 layout_mode = 2
-expand_mode = 3
+size_flags_vertical = 3
+expand_mode = 1
+script = ExtResource("3_rpl")
 
 [node name="ReplayControls" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer" unique_id=125304639]
 layout_mode = 2
 
+[node name="TurnCounterLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer/ReplayControls" unique_id=1091322268]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Turn: 999"
+label_settings = ExtResource("2_5othp")
+
 [node name="RestartButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer/ReplayControls" unique_id=1771105747]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "<|"
 
 [node name="PlayButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer/ReplayControls" unique_id=1824206721]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = ">"
