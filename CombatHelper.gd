@@ -57,6 +57,6 @@ static func attack(attackerCell:CellData, defenderCell:CellData) -> CombatResult
 	Global.mapUnits[attackerCell.unit.mapUnitId].showHitNumber(result.attackerDamage)
 	Global.mapUnits[defenderCell.unit.mapUnitId].showHitNumber(result.defenderDamage)
 
-	result.attackerDead = (attackerCell.unit.hp < 0)
-	result.defenderDead = (defenderCell.unit.hp < 0)
+	result.attackerDead = (attackerCell.unit.hp <= 0)
+	result.defenderDead = (defenderCell.unit.hp <= 0)
 	return result

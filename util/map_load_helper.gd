@@ -176,7 +176,7 @@ static func build_special_names_data(names: Dictionary[Vector2i, String]) -> Dic
 	return data
 
 # Each unit definition: { "id": int, "name": String, "ui_name": String, "hp": int, "movement": int,
-#   "texture": String (full path), "advantage_ids": Array[int] }
+#   "cost": int, "texture": String (full path), "advantage_ids": Array[int] }
 # "id" is the unit's tile source id on the CombatUnitInit layer, which is what mapdata.json stores.
 
 # Loads the map's units.json, falling back to the default unit definitions in common_data
@@ -216,6 +216,7 @@ static func parse_unit_data(data: Variant, texture_dir: String) -> Array[Diction
 			"ui_name": entry.get("uiName", key),
 			"hp": int(entry.get("hp", 100)),
 			"movement": int(entry.get("movement", 1)),
+			"cost": int(entry.get("cost", 1)),
 			"texture": texture_dir.path_join(texture_file) if not texture_file.is_empty() else "",
 			"advantage_ids": [] as Array[int],
 		})
@@ -242,6 +243,7 @@ static func build_unit_data(units: Array[Dictionary], texture_files: Dictionary)
 			"id": unit["id"],
 			"uiName": unit["ui_name"],
 			"movement": unit["movement"],
+			"cost": unit["cost"],
 			"texture": texture_files.get(unit["id"], ""),
 			"hp": unit["hp"],
 			"advantageVersus": advantage_versus,
@@ -258,7 +260,7 @@ static func create_unit_types(units: Array[Dictionary]) -> Dictionary[String, Un
 		for other_id in unit["advantage_ids"]:
 			if names_by_id.has(other_id):
 				advantage_versus.append(names_by_id[other_id])
-		unit_types[unit["name"]] = UnitType.new(load_unit_texture(unit["texture"]), unit["name"], unit["hp"], advantage_versus, unit["movement"], unit["ui_name"])
+		unit_types[unit["name"]] = UnitType.new(load_unit_texture(unit["texture"]), unit["name"], unit["hp"], advantage_versus, unit["movement"], unit["ui_name"], unit["cost"])
 	return unit_types
 
 static func load_unit_texture(path: String) -> Texture2D:

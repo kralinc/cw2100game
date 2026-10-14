@@ -74,22 +74,26 @@ static func assignTasks(assignments:Array) -> Array:
 static func placeReinforcements(faction:Faction):
 	var importantTiles = faction.importantTiles.keys()
 
-	var availableTiles = []
+	# Tiles can neighbor more than one important tile (or be one), so collect them as a set
+	var availableTileSet:Dictionary = {}
 	for tile in importantTiles:
 		if Global.mapData[tile].unit == null:
-			availableTiles.append(tile)
+			availableTileSet[tile] = true
 		for neighbor in Global.hgh.getNeighbors(tile):
 			if Global.mapData[neighbor].unit == null and Global.mapData[neighbor].faction == faction.id:
-				availableTiles.append(neighbor)
+				availableTileSet[neighbor] = true
 
+	var availableTiles = availableTileSet.keys()
 	availableTiles.shuffle()
 	var reinforcementCount = Global.getReinforcementCount()
 	var unitsToCreate :Array = []
-	for i in range(reinforcementCount):
-		if availableTiles.is_empty():
+	# Spend reinforcements the same way the player does, picking randomly from what's still affordable
+	while not availableTiles.is_empty():
+		var affordableTypes = Global.unitTypes.values().filter(func(type): return type.cost <= reinforcementCount)
+		if affordableTypes.is_empty():
 			break
-		var numUnitTypes = Global.unitTypes.size()
-		var unitType = Global.unitTypes.values()[randi() % numUnitTypes]
+		var unitType = affordableTypes.pick_random()
+		reinforcementCount -= unitType.cost
 		var tile = availableTiles.pop_front()
 		unitsToCreate.append({"position": tile, "type": unitType})
 	return unitsToCreate

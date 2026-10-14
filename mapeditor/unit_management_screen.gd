@@ -41,6 +41,7 @@ func _on_add_button_pressed() -> void:
 		"ui_name": "New Unit",
 		"hp": 100,
 		"movement": 3,
+		"cost": 1,
 		"texture": "",
 		"advantage_ids": [],
 	})

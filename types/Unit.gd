@@ -9,9 +9,7 @@ var faction:int
 var position:Vector2i
 var movePath:Array
 var mapUnitId:int
-#delete these
-#var defaultMovePoints:int
-#var name:String
+var outOfSupply:bool = false
 
 func hasAdvantageAgainst(other:Unit):
 	return type.advantageVersus.has(other.type.name)

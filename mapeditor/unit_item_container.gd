@@ -14,6 +14,7 @@ var advantage_ids: Array[int] = []
 @onready var name_edit: LineEdit = $HBoxContainer/InfoContainer/NameContainer/NameEdit
 @onready var hp_spin: SpinBox = $HBoxContainer/InfoContainer/StatsContainer/HpSpin
 @onready var movement_spin: SpinBox = $HBoxContainer/InfoContainer/StatsContainer/MovementSpin
+@onready var cost_spin: SpinBox = $HBoxContainer/InfoContainer/StatsContainer/CostSpin
 @onready var advantage_menu: MenuButton = $HBoxContainer/InfoContainer/AdvantageMenu
 @onready var id_label: Label = $HBoxContainer/InfoContainer/IDLabel
 @onready var delete_button: Button = $HBoxContainer/DeleteUnitButton
@@ -45,6 +46,7 @@ func setup(data: Dictionary) -> void:
 	ui_name_edit.text = data.get("ui_name", "")
 	hp_spin.value = data.get("hp", 100)
 	movement_spin.value = data.get("movement", 1)
+	cost_spin.value = data.get("cost", 1)
 	advantage_ids.assign(data.get("advantage_ids", []))
 	id_label.text = "ID: %d" % unit_id
 	texture_path = data.get("texture", "")
@@ -58,6 +60,7 @@ func get_data() -> Dictionary:
 		"ui_name": ui_name_edit.text.strip_edges(),
 		"hp": int(hp_spin.value),
 		"movement": int(movement_spin.value),
+		"cost": int(cost_spin.value),
 		"texture": texture_path,
 		"advantage_ids": advantage_ids.duplicate(),
 	}

@@ -1,6 +1,7 @@
 {
     "infantry": {
         "id": 0,
+        "cost": 1,
         "uiName": "Infantry",
         "movement": 3,
         "texture": "soldier.png",
@@ -9,6 +10,7 @@
     },
     "tank": {
         "id": 1,
+        "cost": 1,
         "uiName": "Tank",
         "movement": 4,
         "texture": "tank.png",
@@ -17,6 +19,7 @@
     },
     "artillery": {
         "id": 2,
+        "cost": 1,
         "uiName": "Artillery",
         "movement": 2,
         "texture": "artillery.png",

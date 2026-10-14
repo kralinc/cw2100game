@@ -10,6 +10,8 @@ signal next_turn()
 
 enum {PLAY_MODE, REINFORCEMENT_MODE, MULTI_MOVE}
 
+const SUPPLY_ATTRITION_DAMAGE = 20
+
 var inputMode = PLAY_MODE
 var hoveredCell = Vector2i()
 var clickedCell = Vector2i()
@@ -431,7 +433,8 @@ func nextTurnUnitSetup(player:int):
 			continue
 		if unit.faction == player:
 			unit.movePoints = unit.type.movementPoints
-			unit.hp = min(unit.hp + 10, unit.type.hp)
+			if not unit.outOfSupply:
+				unit.hp = min(unit.hp + 10, unit.type.hp)
 			Global.mapUnits[id].setMovementIndicatorVisible(true)
 			Global.mapUnits[id].setMovementIndicatorEmpty(false)
 		else:
@@ -470,7 +473,8 @@ func nextTurnEndOfTurnActions():
 				var unit = Global.mapData[cell].unit
 				if not unit.movePath.is_empty():
 					moveUnit(unit, unit.position)
-		
+			applySupplyAttrition()
+
 			Global.intraTurnCounter += 1
 			if (Global.intraTurnCounter >= Global.factionsList.size()):
 				Global.turnsUntilReinforcement -= 1
@@ -575,10 +579,10 @@ func removeFaction():
 		Global.factionsList.remove_at(removedIndex)
 		Global.currentPlayerIterator = removedIndex - 1
 
-func removeTerritoryPockets():
-	#Breadth first search
-	# Remove any territory pockets that are not connected to an important tile
-	var importantTiles = Global.factions[Global.currentPlayer].importantTiles.keys()
+# Breadth first search from every important tile at once.
+# Returns the tiles owned by factionId that connect through owned territory to one of its important tiles.
+func getSuppliedTiles(factionId:int) -> Dictionary:
+	var importantTiles = Global.factions[factionId].importantTiles.keys()
 	var visited:Dictionary = {}
 	for importantTile in importantTiles:
 		if visited.has(importantTile):
@@ -587,11 +591,29 @@ func removeTerritoryPockets():
 		var queue:Array = Global.hgh.getNeighbors(importantTile)
 		while not queue.is_empty():
 			var tile = queue.pop_front()
-			if not Global.mapData.has(tile) or Global.mapData[tile].faction != Global.currentPlayer or visited.has(tile):
+			if not Global.mapData.has(tile) or Global.mapData[tile].faction != factionId or visited.has(tile):
 				continue
 			visited[tile] = true
 			queue += Global.hgh.getNeighbors(tile)
+	return visited
 
+# Units cut off from every important tile lose hp, and they don't heal next turn
+func applySupplyAttrition():
+	var supplied = getSuppliedTiles(Global.currentPlayer)
+	for cell in Global.factions[Global.currentPlayer].unitPositions.keys():
+		var unit = Global.mapData[cell].unit
+		if unit == null:
+			continue
+		unit.outOfSupply = not supplied.has(cell)
+		if unit.outOfSupply:
+			unit.hp -= SUPPLY_ATTRITION_DAMAGE
+			Global.mapUnits[unit.mapUnitId].showHitNumber(SUPPLY_ATTRITION_DAMAGE)
+			if unit.hp <= 0:
+				Global.destroyUnit(cell)
+
+func removeTerritoryPockets():
+	# Remove any territory pockets that are not connected to an important tile
+	var visited = getSuppliedTiles(Global.currentPlayer)
 	for tile in Global.factions[Global.currentPlayer].controlledTiles.keys():
 		if not visited.has(tile):
 			captureCell(tile, 0)  # Capture the tile for the neutral faction
@@ -683,10 +705,7 @@ func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx:
 					else:
 						selectUnit(pos_clicked)
 				elif inputMode == REINFORCEMENT_MODE:
-					if selectedUnitType != null and getFactionAtPos(pos_clicked) == Global.currentPlayer and not Global.cellContainsFriendlyUnit(pos_clicked) and reinforcementCount > 0 and Global.cellAroundImportantTile(pos_clicked):
-						createNewUnit(pos_clicked, selectedUnitType)
-						reinforcementCount -= 1
-						set_reinforcement_count_ui.emit(reinforcementCount)
+					placeReinforcement(pos_clicked)
 				elif inputMode == MULTI_MOVE:
 					performMultiMove(pos_clicked)
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.is_pressed():
@@ -694,6 +713,12 @@ func _on_click_handler_input_event(viewport: Node, event: InputEvent, shape_idx:
 			$SelectBox.visible = false
 			if inputMode == MULTI_MOVE:
 				exitMultiMoveMode()
+
+func placeReinforcement(pos_clicked:Vector2i):
+	if selectedUnitType != null and getFactionAtPos(pos_clicked) == Global.currentPlayer and not Global.cellContainsFriendlyUnit(pos_clicked) and reinforcementCount >= selectedUnitType.cost and Global.cellAroundImportantTile(pos_clicked):
+		createNewUnit(pos_clicked, selectedUnitType)
+		reinforcementCount -= selectedUnitType.cost
+		set_reinforcement_count_ui.emit(reinforcementCount)
 
 func _on_set_selected_unit(type:UnitType):
 	selectedUnitType = type

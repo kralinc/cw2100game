@@ -74,6 +74,15 @@ min_value = 1.0
 max_value = 50.0
 value = 3.0
 
+[node name="CostLabel" type="Label" parent="HBoxContainer/InfoContainer/StatsContainer"]
+layout_mode = 2
+text = "Cost"
+
+[node name="CostSpin" type="SpinBox" parent="HBoxContainer/InfoContainer/StatsContainer"]
+layout_mode = 2
+max_value = 1000.0
+value = 1.0
+
 [node name="AdvantageMenu" type="MenuButton" parent="HBoxContainer/InfoContainer"]
 layout_mode = 2
 text = "Strong vs: none"
