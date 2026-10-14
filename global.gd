@@ -36,12 +36,30 @@ func _ready() -> void:
 	return
 
 func setupGameData(dir:String, factionControlModes:Dictionary):
+	resetGameState()
 	setupMap(dir)
 	factions = setupFactions(dir)
 	setupTerrain()
 	setupUnitTypes(dir)
 	setupSpecialNames(dir)
 	setupFactionControl(factionControlModes)
+
+# Clear out anything left over from a previous game
+func resetGameState():
+	mapUnitsIncId = 0
+	hgh = null
+	mapData = {}
+	mapUnits = {}
+	factionsList = []
+	currentPlayer = 1
+	currentPlayerIterator = 0
+	numImportantTiles = 0
+	spectatorMode = false
+	spectatorTurn = false
+	turn = 1
+	intraTurnCounter = 0
+	turnsUntilReinforcement = 10
+	reinforcementModeCounter = 0
 
 func setupMap(dir:String):
 	mapDir = dir

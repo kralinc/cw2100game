@@ -1,0 +1,120 @@
+[gd_scene format=3 uid="uid://deo1mr1u583jv"]
+
+[ext_resource type="Script" uid="uid://b381i8kbjg7kp" path="res://GameEndScreen.gd" id="0_ges"]
+[ext_resource type="Texture2D" uid="uid://ca2eygog0jy3n" path="res://assets/otherflagtest.png" id="1_v4k5j"]
+[ext_resource type="LabelSettings" uid="uid://6h8xqvekfw2d" path="res://game_end_screen_label_settings.tres" id="2_5othp"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_0hxld"]
+font_size = 40
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_0hxld"]
+
+[node name="GameEndScreen" type="Panel" unique_id=516705155]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("0_ges")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1614979097]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1247689229]
+layout_mode = 2
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1380381132]
+layout_mode = 2
+
+[node name="WinStatusLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar" unique_id=1446429517]
+unique_name_in_owner = true
+layout_mode = 2
+text = "VICTORY"
+label_settings = SubResource("LabelSettings_0hxld")
+horizontal_alignment = 1
+
+[node name="VSeparator" type="VSeparator" parent="MarginContainer/VBoxContainer/TopBar" unique_id=263675787]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/separator = SubResource("StyleBoxEmpty_0hxld")
+
+[node name="SpectateButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar" unique_id=1467860010]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Spectate"
+
+[node name="MainMenuButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar" unique_id=2099665436]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Main Menu"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1182573335]
+layout_mode = 2
+
+[node name="InfoContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1150884548]
+layout_mode = 2
+
+[node name="FlagAndTitleContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/InfoContainer" unique_id=98869951]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="FlagTextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/InfoContainer/FlagAndTitleContainer" unique_id=1623406694]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("1_v4k5j")
+expand_mode = 3
+
+[node name="CountryNameLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/InfoContainer/FlagAndTitleContainer" unique_id=34661630]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Example Long Country Name"
+label_settings = ExtResource("2_5othp")
+
+[node name="TurnsLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/InfoContainer" unique_id=182622312]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Turns: 999"
+label_settings = ExtResource("2_5othp")
+
+[node name="MapLabel" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer/InfoContainer" unique_id=1955020084]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Map: mapname"
+label_settings = ExtResource("2_5othp")
+
+[node name="ReplayContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/HBoxContainer" unique_id=1154406812]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer" unique_id=1857199602]
+layout_mode = 2
+
+[node name="ReplayTexture" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer" unique_id=1641767389]
+layout_mode = 2
+expand_mode = 3
+
+[node name="ReplayControls" type="HBoxContainer" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer" unique_id=125304639]
+layout_mode = 2
+
+[node name="RestartButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer/ReplayControls" unique_id=1771105747]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "<|"
+
+[node name="PlayButton" type="Button" parent="MarginContainer/VBoxContainer/HBoxContainer/ReplayContainer/VBoxContainer/ReplayControls" unique_id=1824206721]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = ">"

@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://r66t3fdjskjs" path="res://HUDController.gd" id="4_kr5ul"]
 [ext_resource type="Texture2D" uid="uid://ca2eygog0jy3n" path="res://assets/otherflagtest.png" id="4_wtva4"]
 [ext_resource type="Texture2D" uid="uid://0pplnenpcetj" path="res://assets/menu/dirt.png" id="5_bf3um"]
+[ext_resource type="PackedScene" uid="uid://deo1mr1u583jv" path="res://game_end_screen.tscn" id="8_huihk"]
 [ext_resource type="Texture2D" uid="uid://8j7pyfgrf322" path="res://assets/water_128px.png" id="9_2h1s5"]
 [ext_resource type="PackedScene" uid="uid://6m37eo4vu10a" path="res://unit.tscn" id="9_7ffpw"]
 [ext_resource type="Texture2D" uid="uid://cn6o3au8veppb" path="res://assets/selectbox.png" id="18_oggwp"]
@@ -402,6 +403,9 @@ offset_right = 71.0
 offset_bottom = 55.0
 grow_horizontal = 2
 text = "Projected Remaining HP"
+
+[node name="GameEndScreen" parent="HUD" unique_id=516705155 instance=ExtResource("8_huihk")]
+visible = false
 
 [node name="MapContainer" type="Node2D" parent="." unique_id=1473756858]
 

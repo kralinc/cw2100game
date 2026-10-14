@@ -28,6 +28,7 @@ var reinforcementCount:int = 0
 var highlightDirty = true
 var currentHighlights:Dictionary = {} # Vector2i cell -> Vector2i(source, alternative) on the Highlight layer
 var pendingHighlights:Dictionary = {}
+var lastEliminatedHumanFaction:int = -1
 @export var unitScene: PackedScene
 
 # Called when the node enters the scene tree for the first time.
@@ -37,13 +38,14 @@ func _ready():
 	initFactionControl()
 	initPathfinding()
 	initUnits()
+	$HUD/GameEndScreen.spectate_pressed.connect(_on_game_end_screen_spectate_pressed)
 	Global.currentPlayerIterator = Global.factionsList.size() - 1
 	nextTurn()
 	Global.intraTurnCounter = 0
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
-	if (Input.is_action_pressed("next_turn")):
+	if (Input.is_action_pressed("next_turn") and not $HUD/GameEndScreen.visible):
 		nextTurn()
 
 	if highlightDirty:
@@ -504,13 +506,34 @@ func nextTurnStartOfTurnActions():
 		set_reinforcement_count_ui.emit(reinforcementCount)
 	next_turn.emit()
 
-	if not Global.spectatorMode and checkAllHumanPlayersDead():
-		print("All human players are dead. Game over.")
-		Global.spectatorMode = true
+	if checkGameOver():
 		return
 
 	elif (!Global.humanPlayers.has(Global.currentPlayer) and not Global.spectatorTurn):
 		doAITurn()
+
+# Shows the game end screen and returns true if the game should stop advancing turns
+func checkGameOver() -> bool:
+	var endScreen = $HUD/GameEndScreen
+	if Global.factionsList.size() <= 1:
+		var winnerId = Global.factionsList[0] if Global.factionsList.size() == 1 else -1
+		var victory = Global.humanPlayers.has(winnerId)
+		print("Game over. Winner: %s" % (Global.factions[winnerId].fullName if winnerId != -1 else "None"))
+		endScreen.showResult(victory, Global.factions[winnerId] if victory else getLastEliminatedHumanFaction(), false)
+		return true
+	if not Global.spectatorMode and checkAllHumanPlayersDead():
+		print("All human players are dead. Game over.")
+		Global.spectatorMode = true
+		endScreen.showResult(false, getLastEliminatedHumanFaction(), true)
+		return true
+	return false
+
+func getLastEliminatedHumanFaction() -> Faction:
+	return Global.factions.get(lastEliminatedHumanFaction)
+
+func _on_game_end_screen_spectate_pressed() -> void:
+	# The turn that was interrupted by the end screen belongs to an AI, so let it play
+	doAITurn()
 
 func checkAllHumanPlayersDead():
 	var allDead = true
@@ -521,6 +544,8 @@ func checkAllHumanPlayersDead():
 	return allDead
 
 func removeFaction():
+	if Global.humanPlayers.has(Global.currentPlayer):
+		lastEliminatedHumanFaction = Global.currentPlayer
 	#Clear faction units
 	for unitPos in Global.factions[Global.currentPlayer].unitPositions.keys():
 		var unit = Global.mapData[unitPos].unit
@@ -593,6 +618,8 @@ func exitMultiMoveMode():
 	selectedUnitPositions.clear()
 
 func _input(event):
+	if $HUD/GameEndScreen.visible:
+		return
 	if event is InputEventMouseMotion:
 		var global_pos = get_global_mouse_position()
 		hoveredWorldPos = global_pos
